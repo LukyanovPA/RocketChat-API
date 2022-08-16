@@ -49,26 +49,26 @@ fun Route.signUp(
                         salt = saltedHash.salt
                     )
                 )
+
+                val token = tokenService.generate(
+                    config = tokenConfig,
+                    TokenClaim(
+                        name = "userUUID",
+                        value = uuid.toString()
+                    )
+                )
+
+                call.respond(
+                    status = HttpStatusCode.OK,
+                    message = TokenResponse(
+                        token = token
+                    )
+                )
             } catch (e: ExposedSQLException) {
                 call.respond(HttpStatusCode.Conflict, e.localizedMessage)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, "Can't create user ${e.localizedMessage}")
             }
-
-            val token = tokenService.generate(
-                config = tokenConfig,
-                TokenClaim(
-                    name = "userUUID",
-                    value = uuid.toString()
-                )
-            )
-
-            call.respond(
-                status = HttpStatusCode.OK,
-                message = TokenResponse(
-                    token = token
-                )
-            )
         }
     }
 }
