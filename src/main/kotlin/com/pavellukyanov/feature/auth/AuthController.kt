@@ -1,10 +1,12 @@
 package com.pavellukyanov.feature.auth
 
 import com.pavellukyanov.data.users.Users
+import com.pavellukyanov.data.users.request.SignInRequest
 import com.pavellukyanov.data.users.request.SignUpRequest
 import com.pavellukyanov.data.users.response.TokenResponse
 import com.pavellukyanov.feature.auth.entity.User
 import com.pavellukyanov.security.hashing.HashingService
+import com.pavellukyanov.security.hashing.SaltedHash
 import com.pavellukyanov.security.token.TokenClaim
 import com.pavellukyanov.security.token.TokenConfig
 import com.pavellukyanov.security.token.TokenService
@@ -13,6 +15,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.apache.commons.codec.digest.DigestUtils
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import java.util.*
 
@@ -70,5 +73,52 @@ fun Route.signUp(
                 call.respond(HttpStatusCode.BadRequest, "Can't create user ${e.localizedMessage}")
             }
         }
+    }
+}
+
+fun Route.signIn(
+    hashingService: HashingService,
+    tokenService: TokenService,
+    tokenConfig: TokenConfig
+) {
+    post("signin") {
+        val request = call.receiveOrNull<SignInRequest>() ?: kotlin.run {
+            call.respond(HttpStatusCode.BadRequest)
+            return@post
+        }
+
+        val user = Users.fetchUser(request.username)
+        if(user == null) {
+            call.respond(HttpStatusCode.Conflict, "Incorrect username or password")
+            return@post
+        }
+
+        val isValidPassword = hashingService.verify(
+            value = request.password,
+            saltedHash = SaltedHash(
+                hash = user.password,
+                salt = user.salt
+            )
+        )
+        if(!isValidPassword) {
+            println("Entered hash: ${DigestUtils.sha256Hex("${user.salt}${request.password}")}, Hashed PW: ${user.password}")
+            call.respond(HttpStatusCode.Conflict, "Incorrect username or password")
+            return@post
+        }
+
+        val token = tokenService.generate(
+            config = tokenConfig,
+            TokenClaim(
+                name = "userUUID",
+                value = user.uuid.toString()
+            )
+        )
+
+        call.respond(
+            status = HttpStatusCode.OK,
+            message = TokenResponse(
+                token = token
+            )
+        )
     }
 }
