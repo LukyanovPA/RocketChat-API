@@ -9,7 +9,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object Users : Table() {
     private val uuid = Users.uuid("uuid")
     private val salt = Users.varchar("salt", 75)
-    private val password = Users.varchar("password", 25)
+    private val password = Users.varchar("password", 75)
     private val username = Users.varchar("username", 30)
     private val email = Users.varchar("email", 25)
 
