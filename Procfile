@@ -1,1 +1,1 @@
-web: ./build/install/RocketChat-API/bin/RocketChat-API
+web: ./build/install/rocketchat-api/bin/rocketchat-api
