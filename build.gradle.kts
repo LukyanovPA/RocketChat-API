@@ -47,3 +47,7 @@ dependencies {
 
     implementation("commons-codec:commons-codec:$commons_codec_version")
 }
+
+tasks {
+    create("stage").dependsOn("installDist")
+}
