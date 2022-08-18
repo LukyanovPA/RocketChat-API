@@ -4,7 +4,6 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 
 object Tokens : Table() {
     private val uuid = Tokens.varchar("uuid", 1000)
@@ -42,7 +41,7 @@ object Tokens : Table() {
     fun updateToken(uuidIn: String, newRefreshToken: String) {
         try {
             transaction {
-                Tokens.update {
+                Tokens.insert {
                     it[uuid] = uuidIn
                     it[refreshToken] = newRefreshToken
                 }
