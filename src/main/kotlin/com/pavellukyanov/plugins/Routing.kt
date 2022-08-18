@@ -1,6 +1,7 @@
 package com.pavellukyanov.plugins
 
 import com.pavellukyanov.feature.auth.getSecretInfo
+import com.pavellukyanov.feature.auth.refreshToken
 import com.pavellukyanov.feature.auth.signIn
 import com.pavellukyanov.feature.auth.signUp
 import com.pavellukyanov.security.hashing.HashingService
@@ -18,6 +19,7 @@ fun Application.configureRouting(
     routing {
         signUp(hashingService, tokenService, tokenConfig)
         signIn(hashingService, tokenService, tokenConfig)
+        refreshToken(tokenService, tokenConfig)
         getSecretInfo()
     }
 }
