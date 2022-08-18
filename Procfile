@@ -1,1 +1,1 @@
-web: java -jar ./gradle/wrapper/gradle-wrapper.jar
+web: ./build/install/com.pavellukyanov.rocket-chat/bin/com.pavellukyanov.rocket-chat
