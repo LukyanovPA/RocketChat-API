@@ -26,7 +26,7 @@ fun Route.signUp(
     tokenService: TokenService,
     tokenConfig: TokenConfig
 ) {
-    post("signup") {
+    post("api/auth/signup") {
         val request = call.receiveOrNull<SignUpRequest>() ?: kotlin.run {
             call.respond(HttpStatusCode.BadRequest)
             return@post
@@ -127,7 +127,7 @@ fun Route.signIn(
 
 fun Route.getSecretInfo() {
     authenticate {
-        get("secret") {
+        get("api/auth/secret") {
             val principal = call.principal<JWTPrincipal>()
             val userId = principal?.getClaim("userUUID", String::class)
             call.respond(HttpStatusCode.OK, "Your userId is $userId")
