@@ -1,6 +1,8 @@
 package com.pavellukyanov.feature.auth
 
+import com.pavellukyanov.data.users.Tokens
 import com.pavellukyanov.data.users.Users
+import com.pavellukyanov.data.users.request.RefreshToken
 import com.pavellukyanov.data.users.request.SignInRequest
 import com.pavellukyanov.data.users.request.SignUpRequest
 import com.pavellukyanov.data.users.response.TokenResponse
@@ -26,7 +28,7 @@ fun Route.signUp(
     tokenService: TokenService,
     tokenConfig: TokenConfig
 ) {
-    post("api/auth/signup") {
+    post("api/auth/signUp") {
         val request = call.receiveOrNull<SignUpRequest>() ?: kotlin.run {
             call.respond(HttpStatusCode.BadRequest)
             return@post
@@ -63,10 +65,18 @@ fun Route.signUp(
                     )
                 )
 
+                val refreshToken = UUID.randomUUID().toString()
+
+                Tokens.insert(
+                    uuidIn = uuid.toString(),
+                    refreshTokenIn = refreshToken
+                )
+
                 call.respond(
                     status = HttpStatusCode.OK,
                     message = TokenResponse(
-                        token = token
+                        token = token,
+                        refreshToken = refreshToken
                     )
                 )
             } catch (e: ExposedSQLException) {
@@ -83,14 +93,14 @@ fun Route.signIn(
     tokenService: TokenService,
     tokenConfig: TokenConfig
 ) {
-    post("api/auth/signin") {
+    post("api/auth/signIn") {
         val request = call.receiveOrNull<SignInRequest>() ?: kotlin.run {
             call.respond(HttpStatusCode.BadRequest)
             return@post
         }
 
         val user = Users.fetchUser(request.username)
-        if(user == null) {
+        if (user == null) {
             call.respond(HttpStatusCode.Conflict, "Incorrect username or password")
             return@post
         }
@@ -102,10 +112,20 @@ fun Route.signIn(
                 salt = user.salt
             )
         )
-        if(!isValidPassword) {
+        if (!isValidPassword) {
             println("Entered hash: ${DigestUtils.sha256Hex("${user.salt}${request.password}")}, Hashed PW: ${user.password}")
             call.respond(HttpStatusCode.Conflict, "Incorrect username or password")
             return@post
+        }
+
+        val refreshToken = Tokens.getRefreshToken(user.uuid.toString())
+
+        if (refreshToken == null) {
+            val newRefreshToken = UUID.randomUUID().toString()
+            Tokens.insert(
+                uuidIn = user.uuid.toString(),
+                refreshTokenIn = newRefreshToken
+            )
         }
 
         val token = tokenService.generate(
@@ -119,9 +139,51 @@ fun Route.signIn(
         call.respond(
             status = HttpStatusCode.OK,
             message = TokenResponse(
-                token = token
+                token = token,
+                refreshToken = refreshToken!!
             )
         )
+    }
+}
+
+fun Route.refreshToken(
+    tokenService: TokenService,
+    tokenConfig: TokenConfig
+) {
+    post("api/auth/refreshToken") {
+        val request = call.receiveOrNull<RefreshToken>() ?: kotlin.run {
+            call.respond(HttpStatusCode.BadRequest)
+            return@post
+        }
+
+        val userUuid = Tokens.getUuid(request.refreshToken)
+        if (userUuid == null) {
+            call.respond(HttpStatusCode.Conflict, "Bad Refresh Token")
+            return@post
+        } else {
+            val newRefreshToken = UUID.randomUUID().toString()
+
+            Tokens.updateToken(
+                uuidIn = userUuid,
+                newRefreshToken = newRefreshToken
+            )
+
+            val token = tokenService.generate(
+                config = tokenConfig,
+                TokenClaim(
+                    name = "userUUID",
+                    value = userUuid
+                )
+            )
+
+            call.respond(
+                status = HttpStatusCode.OK,
+                message = TokenResponse(
+                    token = token,
+                    refreshToken = newRefreshToken
+                )
+            )
+        }
     }
 }
 
