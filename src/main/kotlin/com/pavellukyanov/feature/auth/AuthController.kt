@@ -2,7 +2,6 @@ package com.pavellukyanov.feature.auth
 
 import com.pavellukyanov.data.users.Tokens
 import com.pavellukyanov.data.users.Users
-import com.pavellukyanov.data.users.request.RefreshToken
 import com.pavellukyanov.data.users.request.SignInRequest
 import com.pavellukyanov.data.users.request.SignUpRequest
 import com.pavellukyanov.data.users.response.TokenResponse
@@ -151,12 +150,9 @@ fun Route.refreshToken(
     tokenConfig: TokenConfig
 ) {
     post("api/auth/refreshToken") {
-        val request = call.receiveOrNull<RefreshToken>() ?: kotlin.run {
-            call.respond(HttpStatusCode.BadRequest)
-            return@post
-        }
+        val request = call.receiveText()
 
-        val userUuid = Tokens.getUuid(request.refreshToken)
+        val userUuid = Tokens.getUuid(request)
         if (userUuid == null) {
             call.respond(HttpStatusCode.Conflict, "Bad Refresh Token")
             return@post
