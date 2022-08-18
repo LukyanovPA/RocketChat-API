@@ -15,8 +15,8 @@ plugins {
 group = "com.pavellukyanov"
 version = "0.0.1"
 application {
-    mainClass.set("io.ktor.server.netty.EngineMain")
-    project.setProperty("mainClassName", mainClass.get())
+    mainClass.set("com.pavellukyanov.ApplicationKt")
+//    project.setProperty("mainClassName", mainClass.get())
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
