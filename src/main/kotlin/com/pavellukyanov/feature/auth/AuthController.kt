@@ -63,10 +63,19 @@ fun Route.signUp(
                     )
                 )
 
+                val refreshToken = tokenService.generate(
+                    config = tokenConfig,
+                    TokenClaim(
+                        name = "userUUID",
+                        value = uuid.toString()
+                    )
+                )
+
                 call.respond(
                     status = HttpStatusCode.OK,
                     message = TokenResponse(
-                        token = token
+                        token = token,
+                        refreshToken = refreshToken
                     )
                 )
             } catch (e: ExposedSQLException) {
@@ -116,10 +125,21 @@ fun Route.signIn(
             )
         )
 
+        val refreshToken = tokenService.generate(
+            config = tokenConfig,
+            TokenClaim(
+                name = "userUUID",
+                value = user.uuid.toString()
+            )
+        )
+
+        println("token $token refresh $refreshToken")
+
         call.respond(
             status = HttpStatusCode.OK,
             message = TokenResponse(
-                token = token
+                token = token,
+                refreshToken = refreshToken
             )
         )
     }
