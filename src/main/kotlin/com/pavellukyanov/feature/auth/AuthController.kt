@@ -83,7 +83,7 @@ fun Route.signIn(
     tokenService: TokenService,
     tokenConfig: TokenConfig
 ) {
-    post("signin") {
+    post("api/auth/signin") {
         val request = call.receiveOrNull<SignInRequest>() ?: kotlin.run {
             call.respond(HttpStatusCode.BadRequest)
             return@post

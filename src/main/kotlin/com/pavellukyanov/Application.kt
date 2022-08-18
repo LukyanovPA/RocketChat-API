@@ -9,7 +9,6 @@ import com.pavellukyanov.security.token.JwtTokenService
 import com.pavellukyanov.security.token.TokenConfig
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import org.jetbrains.exposed.sql.Database
@@ -35,24 +34,3 @@ fun main() {
         configureRouting(hashingService, tokenService, jwtConfig)
     }.start(wait = true)
 }
-
-//@Suppress("unused")
-//fun Application.module() {
-//    val config = HikariConfig("hikari.properties")
-//    val dataSource = HikariDataSource(config)
-//    Database.connect(dataSource)
-//
-//    val tokenService = JwtTokenService()
-//    val jwtConfig = TokenConfig(
-//        issuer = environment.config.property("jwt.issuer").getString(),
-//        audience = environment.config.property("jwt.audience").getString(),
-//        expiresIn = 365L * 1000L * 60L * 60L * 24L,
-//        secret = System.getenv("JWT_SECRET")
-//    )
-//    val hashingService = SHA256HashingService()
-//
-//    configureSerialization()
-//    configureMonitoring()
-//    configureSecurity(jwtConfig)
-//    configureRouting(hashingService, tokenService, jwtConfig)
-//}
