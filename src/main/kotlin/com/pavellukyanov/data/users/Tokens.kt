@@ -1,5 +1,6 @@
 package com.pavellukyanov.data.users
 
+import io.ktor.server.plugins.callloging.*
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -25,7 +26,7 @@ object Tokens : Table() {
                 token[uuid]
             }
         } catch (e: Exception) {
-            null
+            throw e
         }
 
     fun getRefreshToken(uuidIn: String): String? =
@@ -35,7 +36,7 @@ object Tokens : Table() {
                 uuidLocal[refreshToken]
             }
         } catch (e: Exception) {
-            null
+            throw e
         }
 
     fun updateToken(uuidIn: String, newRefreshToken: String) {
@@ -47,7 +48,7 @@ object Tokens : Table() {
                 }
             }
         } catch (e: Exception) {
-            println(e.toString())
+            throw e
         }
     }
 }
