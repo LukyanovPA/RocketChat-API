@@ -43,6 +43,28 @@ object Users : Table() {
         }
     }
 
+    fun fetchEmail(email: String): String? {
+        return try {
+            transaction {
+                val userModel = Users.select { Users.email.eq(email) }.single()
+                userModel[Users.email]
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun fetchUsername(username: String): String? {
+        return try {
+            transaction {
+                val userModel = Users.select { Users.username.eq(username) }.single()
+                userModel[Users.username]
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun getUser(uuidIn: String): User? = try {
         transaction {
             val userModel = Users.select { uuid.eq(UUID.fromString(uuidIn)) }.single()

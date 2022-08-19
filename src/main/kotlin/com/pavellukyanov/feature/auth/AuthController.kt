@@ -3,7 +3,6 @@ package com.pavellukyanov.feature.auth
 import com.pavellukyanov.base.ObjectResponse
 import com.pavellukyanov.data.users.Tokens
 import com.pavellukyanov.data.users.Users
-import com.pavellukyanov.data.users.request.RefreshToken
 import com.pavellukyanov.data.users.request.SignInRequest
 import com.pavellukyanov.data.users.request.SignUpRequest
 import com.pavellukyanov.data.users.response.TokenResponse
@@ -36,7 +35,8 @@ fun Route.signUp(
             return@post
         }
 
-        val user = Users.fetchUser(request.username)
+        val email = Users.fetchEmail(request.email)
+        val username = Users.fetchUsername(request.username)
         val areFieldsBlank = request.username.isBlank() || request.password.isBlank()
         val isPwTooShort = request.password.length < 8
         val uuid = UUID.randomUUID()
@@ -54,7 +54,17 @@ fun Route.signUp(
             )
         }
 
-        if (user != null) {
+        if (email != null) {
+            val response = ObjectResponse(
+                success = false,
+                data = null,
+                error = "A user with this email already exists"
+            )
+            call.respond(
+                status = HttpStatusCode.Conflict,
+                message = response
+            )
+        } else if (username != null) {
             val response = ObjectResponse(
                 success = false,
                 data = null,
@@ -196,53 +206,55 @@ fun Route.refreshToken(
     tokenService: TokenService,
     tokenConfig: TokenConfig
 ) {
-    post("api/auth/refreshToken") {
-        val request = call.receiveOrNull<RefreshToken>() ?: kotlin.run {
+    post("api/auth/updateToken") {
+        val request = call.request.queryParameters["refreshToken"]
+
+        if (request == null) {
             call.respond(HttpStatusCode.BadRequest)
             return@post
-        }
-
-        val userUuid = Tokens.getUuid(request.refreshToken)
-        if (userUuid == null) {
-            val response = ObjectResponse(
-                success = false,
-                data = null,
-                error = "Bad Refresh Token"
-            )
-            call.respond(
-                status = HttpStatusCode.BadRequest,
-                message = response
-            )
-            return@post
         } else {
-            val newRefreshToken = UUID.randomUUID().toString()
-
-            Tokens.updateToken(
-                uuidIn = userUuid,
-                newRefreshToken = newRefreshToken
-            )
-
-            val token = tokenService.generate(
-                config = tokenConfig,
-                TokenClaim(
-                    name = "userUUID",
-                    value = userUuid
+            val userUuid = Tokens.getUuid(request)
+            if (userUuid == null) {
+                val response = ObjectResponse(
+                    success = false,
+                    data = null,
+                    error = "Bad Refresh Token"
                 )
-            )
+                call.respond(
+                    status = HttpStatusCode.BadRequest,
+                    message = response
+                )
+                return@post
+            } else {
+                val newRefreshToken = UUID.randomUUID().toString()
 
-            val response = ObjectResponse(
-                success = true,
-                data = TokenResponse(
-                    token = token,
-                    refreshToken = newRefreshToken
-                ),
-                error = null
-            )
+                Tokens.updateToken(
+                    uuidIn = userUuid,
+                    newRefreshToken = newRefreshToken
+                )
 
-            call.respond(
-                status = HttpStatusCode.OK,
-                message = response
-            )
+                val token = tokenService.generate(
+                    config = tokenConfig,
+                    TokenClaim(
+                        name = "userUUID",
+                        value = userUuid
+                    )
+                )
+
+                val response = ObjectResponse(
+                    success = true,
+                    data = TokenResponse(
+                        token = token,
+                        refreshToken = newRefreshToken
+                    ),
+                    error = null
+                )
+
+                call.respond(
+                    status = HttpStatusCode.OK,
+                    message = response
+                )
+            }
         }
     }
 }
