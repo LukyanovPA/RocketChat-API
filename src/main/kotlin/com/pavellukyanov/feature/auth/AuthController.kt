@@ -6,6 +6,7 @@ import com.pavellukyanov.data.users.request.RefreshToken
 import com.pavellukyanov.data.users.request.SignInRequest
 import com.pavellukyanov.data.users.request.SignUpRequest
 import com.pavellukyanov.data.users.response.TokenResponse
+import com.pavellukyanov.data.users.response.UserResponse
 import com.pavellukyanov.feature.auth.entity.User
 import com.pavellukyanov.security.hashing.HashingService
 import com.pavellukyanov.security.hashing.SaltedHash
@@ -192,7 +193,16 @@ fun Route.getSecretInfo() {
         get("api/auth/secret") {
             val principal = call.principal<JWTPrincipal>()
             val userId = principal?.getClaim("userUUID", String::class)
-            call.respond(HttpStatusCode.OK, "Your userId is $userId")
+            val user = Users.getUser(userId!!)
+
+            call.respond(
+                status = HttpStatusCode.OK,
+                message = UserResponse(
+                    uuid = user?.uuid.toString(),
+                    username = user?.username,
+                    email = user?.email
+                )
+            )
         }
     }
 }

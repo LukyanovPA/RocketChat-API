@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.*
 
 object Users : Table() {
     private val uuid = Users.uuid("uuid")
@@ -40,5 +41,21 @@ object Users : Table() {
         } catch (e: Exception) {
             null
         }
+    }
+
+    fun getUser(uuidIn: String): User? = try {
+        transaction {
+            val userModel = Users.select { uuid.eq(UUID.fromString(uuidIn)) }.single()
+
+            User(
+                username = userModel[username],
+                password = userModel[password],
+                email = userModel[email],
+                uuid = userModel[uuid],
+                salt = userModel[salt]
+            )
+        }
+    } catch (e: Exception) {
+        null
     }
 }

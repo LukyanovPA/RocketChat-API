@@ -1,22 +1,24 @@
 package com.pavellukyanov.data.users
 
-import io.ktor.server.plugins.callloging.*
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 
 object Tokens : Table() {
     private val uuid = Tokens.varchar("uuid", 1000)
     private val refreshToken = Tokens.varchar("refreshToken", 1000)
 
-    fun insert(uuidIn: String, refreshTokenIn: String) {
+    fun insert(uuidIn: String, refreshTokenIn: String) = try {
         transaction {
             Tokens.insert {
                 it[uuid] = uuidIn
                 it[refreshToken] = refreshTokenIn
             }
         }
+    } catch (e: java.lang.Exception) {
+        println("insert $e")
     }
 
     fun getUuid(refreshTokenIn: String): String? =
@@ -26,6 +28,7 @@ object Tokens : Table() {
                 token[uuid]
             }
         } catch (e: Exception) {
+            println("getUuid $e")
             throw e
         }
 
@@ -42,12 +45,12 @@ object Tokens : Table() {
     fun updateToken(uuidIn: String, newRefreshToken: String) {
         try {
             transaction {
-                Tokens.insert {
-                    it[uuid] = uuidIn
+                Tokens.update({ uuid eq uuidIn }) {
                     it[refreshToken] = newRefreshToken
                 }
             }
         } catch (e: Exception) {
+            println("updateToken $e")
             throw e
         }
     }
