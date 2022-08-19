@@ -126,17 +126,18 @@ fun Route.signIn(
             return@post
         }
 
-        val user = Users.fetchUser(request.username)
-        if (user == null) {
-            val response = ObjectResponse(
-                success = false,
-                data = null,
-                error = "Incorrect username or password"
-            )
+        val user = Users.fetchUser(request.email)
 
+        val badResponse = ObjectResponse(
+            success = false,
+            data = null,
+            error = "Incorrect email or password"
+        )
+
+        if (user == null) {
             call.respond(
                 status = HttpStatusCode.Conflict,
-                message = response
+                message = badResponse
             )
             return@post
         }
@@ -150,16 +151,9 @@ fun Route.signIn(
         )
         if (!isValidPassword) {
             println("Entered hash: ${DigestUtils.sha256Hex("${user.salt}${request.password}")}, Hashed PW: ${user.password}")
-
-            val response = ObjectResponse(
-                success = false,
-                data = null,
-                error = "Incorrect username or password"
-            )
-
             call.respond(
                 status = HttpStatusCode.Conflict,
-                message = response
+                message = badResponse
             )
             return@post
         }
@@ -255,7 +249,7 @@ fun Route.refreshToken(
 
 fun Route.getSecretInfo() {
     authenticate {
-        get("api/auth/secret") {
+        get("api/auth/currentUser") {
             val principal = call.principal<JWTPrincipal>()
             val userId = principal?.getClaim("userUUID", String::class)
             val user = Users.getUser(userId!!)

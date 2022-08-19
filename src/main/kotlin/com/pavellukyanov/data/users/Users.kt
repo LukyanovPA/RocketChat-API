@@ -26,14 +26,14 @@ object Users : Table() {
         }
     }
 
-    fun fetchUser(username: String): User? {
+    fun fetchUser(email: String): User? {
         return try {
             transaction {
-                val userModel = Users.select { Users.username.eq(username) }.single()
+                val userModel = Users.select { Users.email.eq(email) }.single()
                 User(
-                    username = userModel[Users.username],
+                    username = userModel[username],
                     password = userModel[password],
-                    email = userModel[email],
+                    email = userModel[Users.email],
                     uuid = userModel[uuid],
                     salt = userModel[salt]
                 )
