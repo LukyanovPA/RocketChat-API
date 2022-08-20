@@ -7,5 +7,5 @@ data class UserResponse(
     val uuid: String?,
     val username: String?,
     val email: String?,
-    val avatar: String? = null
+    val avatar: String?
 )

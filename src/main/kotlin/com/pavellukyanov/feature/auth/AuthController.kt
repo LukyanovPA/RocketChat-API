@@ -67,7 +67,8 @@ fun Route.signUp(
                         password = saltedHash.hash,
                         email = request.email,
                         uuid = uuid,
-                        salt = saltedHash.salt
+                        salt = saltedHash.salt,
+                        avatar = null
                     )
                 )
 

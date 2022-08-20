@@ -1,7 +1,6 @@
 package com.pavellukyanov.data.users
 
 import com.pavellukyanov.feature.auth.entity.User
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -15,7 +14,7 @@ object Users : Table() {
     private val password = Users.varchar("password", 75)
     private val username = Users.varchar("username", 30)
     private val email = Users.varchar("email", 25)
-    private val avatar = Users.varchar("avatar", 200)
+    private val avatar = Users.varchar("avatar", 400)
 
     fun insert(user: User) {
         transaction {
@@ -25,6 +24,9 @@ object Users : Table() {
                 it[email] = user.email
                 it[uuid] = user.uuid
                 it[salt] = user.salt
+                user.avatar?.let { ava ->
+                    it[avatar] = ava
+                }
             }
         }
     }
@@ -38,7 +40,8 @@ object Users : Table() {
                     password = userModel[password],
                     email = userModel[Users.email],
                     uuid = userModel[uuid],
-                    salt = userModel[salt]
+                    salt = userModel[salt],
+                    avatar = userModel[avatar]
                 )
             }
         } catch (e: Exception) {
@@ -74,13 +77,13 @@ object Users : Table() {
     fun getUser(uuidIn: String): User? = try {
         transaction {
             val userModel = Users.select { uuid.eq(UUID.fromString(uuidIn)) }.single()
-
             User(
                 username = userModel[username],
                 password = userModel[password],
                 email = userModel[email],
                 uuid = userModel[uuid],
-                salt = userModel[salt]
+                salt = userModel[salt],
+                avatar = userModel[avatar]
             )
         }
     } catch (e: Exception) {
@@ -89,14 +92,10 @@ object Users : Table() {
     }
 
     fun changeAvatar(uuidIn: UUID, avatarIn: String) {
-        try {
-            transaction {
-                Users.update({ uuid eq uuidIn}) {
-                    it[avatar] = avatarIn
-                }
+        transaction {
+            Users.update({ uuid eq uuidIn }) {
+                it[avatar] = avatarIn
             }
-        } catch (e: Exception) {
-            println("changeAvatar $e")
         }
     }
 }

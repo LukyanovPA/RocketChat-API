@@ -24,8 +24,12 @@ fun Route.changeAvatar() {
                 call.respond(status = HttpStatusCode.BadRequest, message = "No avatar link")
                 return@post
             } else {
-                Users.changeAvatar(UUID.fromString(userId), request)
-                call.respond(status = HttpStatusCode.OK, message = true)
+                try {
+                    Users.changeAvatar(UUID.fromString(userId), request)
+                    call.respond(status = HttpStatusCode.OK, message = true)
+                } catch (e: Exception) {
+                    call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
+                }
             }
         }
     }
@@ -43,7 +47,8 @@ fun Route.getCurrentUser() {
                 message = UserResponse(
                     uuid = user?.uuid.toString(),
                     username = user?.username,
-                    email = user?.email
+                    email = user?.email,
+                    avatar = user?.avatar
                 )
             )
         }
