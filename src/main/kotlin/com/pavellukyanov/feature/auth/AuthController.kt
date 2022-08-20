@@ -220,3 +220,15 @@ fun Route.refreshToken(
         }
     }
 }
+
+fun Route.logout() {
+    authenticate {
+        get("api/auth/logout") {
+            val principal = call.principal<JWTPrincipal>()
+            val userId = principal?.getClaim("userUUID", String::class)
+            val state = Tokens.deleteToken(userId)
+
+            if (state) call.respond(HttpStatusCode.OK) else call.respond(HttpStatusCode.Conflict)
+        }
+    }
+}

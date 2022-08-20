@@ -50,15 +50,3 @@ fun Route.getCurrentUser() {
         }
     }
 }
-
-fun Route.logout() {
-    authenticate {
-        get("api/users/logout") {
-            val principal = call.principal<JWTPrincipal>()
-            val userId = principal?.getClaim("userUUID", String::class)
-            val state = Tokens.deleteToken(userId)
-
-            if (state) call.respond(HttpStatusCode.OK) else call.respond(HttpStatusCode.Conflict)
-        }
-    }
-}
