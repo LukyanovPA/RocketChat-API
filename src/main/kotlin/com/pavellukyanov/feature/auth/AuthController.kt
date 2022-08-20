@@ -90,7 +90,8 @@ fun Route.signUp(
                     status = HttpStatusCode.OK,
                     message = TokenResponse(
                         token = token,
-                        refreshToken = refreshToken
+                        refreshToken = refreshToken,
+                        message = null
                     )
                 )
             } catch (e: ExposedSQLException) {
@@ -162,7 +163,8 @@ fun Route.signIn(
             status = HttpStatusCode.OK,
             message = TokenResponse(
                 token = token,
-                refreshToken = refreshToken
+                refreshToken = refreshToken,
+                message = null
             )
         )
     }
@@ -183,7 +185,11 @@ fun Route.refreshToken(
             if (userUuid == null) {
                 call.respond(
                     status = HttpStatusCode.BadRequest,
-                    message = "Bad Refresh Token"
+                    message = TokenResponse(
+                        token = null,
+                        refreshToken = null,
+                        message = "Bad Refresh Token"
+                    )
                 )
                 return@post
             } else {
@@ -206,7 +212,8 @@ fun Route.refreshToken(
                     status = HttpStatusCode.OK,
                     message = TokenResponse(
                         token = token,
-                        refreshToken = newRefreshToken
+                        refreshToken = newRefreshToken,
+                        message = null
                     )
                 )
             }
