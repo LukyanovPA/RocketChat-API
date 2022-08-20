@@ -1,7 +1,11 @@
 package com.pavellukyanov.plugins
 
-import com.pavellukyanov.feature.auth.*
+import com.pavellukyanov.feature.auth.refreshToken
+import com.pavellukyanov.feature.auth.signIn
+import com.pavellukyanov.feature.auth.signUp
 import com.pavellukyanov.feature.users.changeAvatar
+import com.pavellukyanov.feature.users.getCurrentUser
+import com.pavellukyanov.feature.users.logout
 import com.pavellukyanov.security.hashing.HashingService
 import com.pavellukyanov.security.token.TokenConfig
 import com.pavellukyanov.security.token.TokenService
@@ -19,10 +23,10 @@ fun Application.configureRouting(
         signUp(hashingService, tokenService, tokenConfig)
         signIn(hashingService, tokenService, tokenConfig)
         refreshToken(tokenService, tokenConfig)
-        getSecretInfo()
-        logout()
 
         //Users
         changeAvatar()
+        getCurrentUser()
+        logout()
     }
 }

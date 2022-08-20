@@ -1,6 +1,8 @@
 package com.pavellukyanov.feature.users
 
+import com.pavellukyanov.data.users.Tokens
 import com.pavellukyanov.data.users.Users
+import com.pavellukyanov.data.users.response.UserResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -26,6 +28,37 @@ fun Route.changeAvatar() {
                 Users.changeAvatar(UUID.fromString(userId), request)
                 call.respond(status = HttpStatusCode.OK, message = true)
             }
+        }
+    }
+}
+
+fun Route.getCurrentUser() {
+    authenticate {
+        get("api/users/currentUser") {
+            val principal = call.principal<JWTPrincipal>()
+            val userId = principal?.getClaim("userUUID", String::class)
+            val user = Users.getUser(userId!!)
+
+            call.respond(
+                status = HttpStatusCode.OK,
+                message = UserResponse(
+                    uuid = user?.uuid.toString(),
+                    username = user?.username,
+                    email = user?.email
+                )
+            )
+        }
+    }
+}
+
+fun Route.logout() {
+    authenticate {
+        get("api/users/logout") {
+            val principal = call.principal<JWTPrincipal>()
+            val userId = principal?.getClaim("userUUID", String::class)
+            val state = Tokens.deleteToken(userId)
+
+            if (state) call.respond(HttpStatusCode.OK) else call.respond(HttpStatusCode.Conflict)
         }
     }
 }
