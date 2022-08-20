@@ -15,7 +15,7 @@ object Users : Table() {
     private val password = Users.varchar("password", 75)
     private val username = Users.varchar("username", 30)
     private val email = Users.varchar("email", 25)
-    private val avatar = Users.varchar("avatar", 100)
+    private val avatar = Users.varchar("avatar", 200)
 
     fun insert(user: User) {
         transaction {

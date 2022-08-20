@@ -1,6 +1,5 @@
 package com.pavellukyanov.feature.users
 
-import com.pavellukyanov.data.users.Tokens
 import com.pavellukyanov.data.users.Users
 import com.pavellukyanov.data.users.response.UserResponse
 import io.ktor.http.*
