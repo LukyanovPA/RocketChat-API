@@ -1,10 +1,12 @@
 package com.pavellukyanov.data.users
 
 import com.pavellukyanov.feature.auth.entity.User
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import java.util.*
 
 object Users : Table() {
@@ -13,6 +15,7 @@ object Users : Table() {
     private val password = Users.varchar("password", 75)
     private val username = Users.varchar("username", 30)
     private val email = Users.varchar("email", 25)
+    private val avatar = Users.varchar("avatar", 100)
 
     fun insert(user: User) {
         transaction {
@@ -39,6 +42,7 @@ object Users : Table() {
                 )
             }
         } catch (e: Exception) {
+            println("fetchUser $e")
             null
         }
     }
@@ -50,6 +54,7 @@ object Users : Table() {
                 userModel[Users.email]
             }
         } catch (e: Exception) {
+            println("fetchEmail $e")
             null
         }
     }
@@ -61,6 +66,7 @@ object Users : Table() {
                 userModel[Users.username]
             }
         } catch (e: Exception) {
+            println("fetchUsername $e")
             null
         }
     }
@@ -78,6 +84,19 @@ object Users : Table() {
             )
         }
     } catch (e: Exception) {
+        println("getUser $e")
         null
+    }
+
+    fun changeAvatar(uuidIn: UUID, avatarIn: String) {
+        try {
+            transaction {
+                Users.update({ uuid eq uuidIn}) {
+                    it[avatar] = avatarIn
+                }
+            }
+        } catch (e: Exception) {
+            println("changeAvatar $e")
+        }
     }
 }

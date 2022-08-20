@@ -1,10 +1,7 @@
 package com.pavellukyanov.data.users
 
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 
 object Tokens : Table() {
     private val uuid = Tokens.varchar("uuid", 1000)
@@ -29,7 +26,7 @@ object Tokens : Table() {
             }
         } catch (e: Exception) {
             println("getUuid $e")
-            throw e
+            null
         }
 
     fun getRefreshToken(uuidIn: String): String? =
@@ -39,7 +36,8 @@ object Tokens : Table() {
                 uuidLocal[refreshToken]
             }
         } catch (e: Exception) {
-            throw e
+            println("getRefreshToken $e")
+            null
         }
 
     fun updateToken(uuidIn: String, newRefreshToken: String) {
@@ -51,7 +49,21 @@ object Tokens : Table() {
             }
         } catch (e: Exception) {
             println("updateToken $e")
-            throw e
         }
     }
+
+    fun deleteToken(uuidIn: String?): Boolean =
+        try {
+            if (uuidIn != null) {
+                transaction {
+                    Tokens.deleteWhere { uuid eq uuidIn }
+                    true
+                }
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            println("deleteToken $e")
+            false
+        }
 }

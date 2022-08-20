@@ -1,6 +1,5 @@
 package com.pavellukyanov.feature.auth
 
-import com.pavellukyanov.base.ObjectResponse
 import com.pavellukyanov.data.users.Tokens
 import com.pavellukyanov.data.users.Users
 import com.pavellukyanov.data.users.request.SignInRequest
@@ -42,37 +41,21 @@ fun Route.signUp(
         val uuid = UUID.randomUUID()
 
         if (areFieldsBlank || isPwTooShort) {
-            val response = ObjectResponse(
-                success = false,
-                data = null,
-                error = "Empty field username or password"
-            )
-
             call.respond(
                 status = HttpStatusCode.Conflict,
-                message = response
+                message = "Empty field username or password"
             )
         }
 
         if (email != null) {
-            val response = ObjectResponse(
-                success = false,
-                data = null,
-                error = "A user with this email already exists"
-            )
             call.respond(
                 status = HttpStatusCode.Conflict,
-                message = response
+                message = "A user with this email already exists"
             )
         } else if (username != null) {
-            val response = ObjectResponse(
-                success = false,
-                data = null,
-                error = "A user with this username already exists"
-            )
             call.respond(
                 status = HttpStatusCode.Conflict,
-                message = response
+                message = "A user with this username already exists"
             )
         } else {
             try {
@@ -103,18 +86,12 @@ fun Route.signUp(
                     refreshTokenIn = refreshToken
                 )
 
-                val response = ObjectResponse(
-                    success = true,
-                    data = TokenResponse(
-                        token = token,
-                        refreshToken = refreshToken
-                    ),
-                    error = null
-                )
-
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = response
+                    message = TokenResponse(
+                        token = token,
+                        refreshToken = refreshToken
+                    )
                 )
             } catch (e: ExposedSQLException) {
                 call.respond(HttpStatusCode.Conflict, e.localizedMessage)
@@ -138,16 +115,10 @@ fun Route.signIn(
 
         val user = Users.fetchUser(request.email)
 
-        val badResponse = ObjectResponse(
-            success = false,
-            data = null,
-            error = "Incorrect email or password"
-        )
-
         if (user == null) {
             call.respond(
                 status = HttpStatusCode.Conflict,
-                message = badResponse
+                message = "Incorrect email or password"
             )
             return@post
         }
@@ -163,12 +134,12 @@ fun Route.signIn(
             println("Entered hash: ${DigestUtils.sha256Hex("${user.salt}${request.password}")}, Hashed PW: ${user.password}")
             call.respond(
                 status = HttpStatusCode.Conflict,
-                message = badResponse
+                message = "Incorrect email or password"
             )
             return@post
         }
 
-        val refreshToken = Tokens.getRefreshToken(user.uuid.toString())
+        var refreshToken = Tokens.getRefreshToken(user.uuid.toString())
 
         if (refreshToken == null) {
             val newRefreshToken = UUID.randomUUID().toString()
@@ -176,6 +147,7 @@ fun Route.signIn(
                 uuidIn = user.uuid.toString(),
                 refreshTokenIn = newRefreshToken
             )
+            refreshToken = newRefreshToken
         }
 
         val token = tokenService.generate(
@@ -186,18 +158,12 @@ fun Route.signIn(
             )
         )
 
-        val response = ObjectResponse(
-            success = true,
-            data = TokenResponse(
-                token = token,
-                refreshToken = refreshToken!!
-            ),
-            error = null
-        )
-
         call.respond(
             status = HttpStatusCode.OK,
-            message = response
+            message = TokenResponse(
+                token = token,
+                refreshToken = refreshToken
+            )
         )
     }
 }
@@ -215,14 +181,9 @@ fun Route.refreshToken(
         } else {
             val userUuid = Tokens.getUuid(request)
             if (userUuid == null) {
-                val response = ObjectResponse(
-                    success = false,
-                    data = null,
-                    error = "Bad Refresh Token"
-                )
                 call.respond(
                     status = HttpStatusCode.BadRequest,
-                    message = response
+                    message = "Bad Refresh Token"
                 )
                 return@post
             } else {
@@ -241,18 +202,12 @@ fun Route.refreshToken(
                     )
                 )
 
-                val response = ObjectResponse(
-                    success = true,
-                    data = TokenResponse(
-                        token = token,
-                        refreshToken = newRefreshToken
-                    ),
-                    error = null
-                )
-
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = response
+                    message = TokenResponse(
+                        token = token,
+                        refreshToken = newRefreshToken
+                    )
                 )
             }
         }
@@ -265,20 +220,27 @@ fun Route.getSecretInfo() {
             val principal = call.principal<JWTPrincipal>()
             val userId = principal?.getClaim("userUUID", String::class)
             val user = Users.getUser(userId!!)
-            val response = ObjectResponse(
-                success = true,
-                data = UserResponse(
-                    uuid = user?.uuid.toString(),
-                    username = user?.username,
-                    email = user?.email
-                ),
-                error = null
-            )
 
             call.respond(
                 status = HttpStatusCode.OK,
-                message = response
+                message = UserResponse(
+                    uuid = user?.uuid.toString(),
+                    username = user?.username,
+                    email = user?.email
+                )
             )
+        }
+    }
+}
+
+fun Route.logout() {
+    authenticate {
+        get("api/auth/logout") {
+            val principal = call.principal<JWTPrincipal>()
+            val userId = principal?.getClaim("userUUID", String::class)
+            val state = Tokens.deleteToken(userId)
+
+            if (state) call.respond(HttpStatusCode.OK) else call.respond(HttpStatusCode.Conflict)
         }
     }
 }
