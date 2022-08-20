@@ -24,7 +24,8 @@ fun main() {
         val jwtConfig = TokenConfig(
             issuer = environment.config.config("jwt.issuer").toString(),
             audience = environment.config.config("jwt.audience").toString(),
-            expiresIn = 365L * 1000L * 60L * 60L * 24L,
+//            expiresIn = 365L * 1000L * 60L * 60L * 24L,
+            expiresIn = 300000L,
             secret = environment.config.config("jwt.secret").toString()
         )
         val hashingService = SHA256HashingService()
