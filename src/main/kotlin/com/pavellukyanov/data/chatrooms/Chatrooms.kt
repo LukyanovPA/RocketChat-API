@@ -4,6 +4,7 @@ import com.pavellukyanov.feature.chatrooms.entity.Chatroom
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Chatrooms : Table() {
@@ -37,6 +38,27 @@ object Chatrooms : Table() {
             }
         } catch (e: Exception) {
             println("fetchChatroom $e")
+            null
+        }
+    }
+
+    fun getAllChatrooms(): List<Chatroom>? {
+        return try {
+            transaction {
+                Chatrooms.selectAll().map {
+                    Chatroom(
+                        id = it[Chatrooms.id],
+                        ownerUid = it[ownerUid],
+                        name = it[name],
+                        description = it[description],
+                        chatroomImg = it[chatroomImg],
+                        lastMessageTimeStamp = it[lastMessageTimeStamp],
+                        lastMessage = it[lastMessage]
+                    )
+                }.sortedBy { it.lastMessageTimeStamp }.asReversed()
+            }
+        } catch (e: Exception) {
+            println("getAllChatrooms $e")
             null
         }
     }

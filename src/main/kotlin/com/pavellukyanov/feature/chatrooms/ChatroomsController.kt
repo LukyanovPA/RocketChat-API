@@ -55,3 +55,16 @@ fun Route.createChatroom() {
         }
     }
 }
+
+fun Route.getAllChatrooms() {
+    authenticate {
+        get("api/chatrooms/getAllChatrooms") {
+            val chats = Chatrooms.getAllChatrooms()
+
+            call.respond(
+                status = HttpStatusCode.OK,
+                message = chats ?: listOf()
+            )
+        }
+    }
+}

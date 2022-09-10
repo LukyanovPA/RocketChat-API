@@ -5,6 +5,7 @@ import com.pavellukyanov.feature.auth.refreshToken
 import com.pavellukyanov.feature.auth.signIn
 import com.pavellukyanov.feature.auth.signUp
 import com.pavellukyanov.feature.chatrooms.createChatroom
+import com.pavellukyanov.feature.chatrooms.getAllChatrooms
 import com.pavellukyanov.feature.users.changeAvatar
 import com.pavellukyanov.feature.users.getCurrentUser
 import com.pavellukyanov.security.hashing.HashingService
@@ -32,5 +33,6 @@ fun Application.configureRouting(
 
         //Chatrooms
         createChatroom()
+        getAllChatrooms()
     }
 }

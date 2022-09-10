@@ -1,5 +1,6 @@
 package com.pavellukyanov.feature.chatrooms.entity
 
+@kotlinx.serialization.Serializable
 data class Chatroom(
     val id: Int,
     val ownerUid: String,
