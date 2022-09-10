@@ -42,24 +42,19 @@ object Chatrooms : Table() {
         }
     }
 
-    fun getAllChatrooms(): List<Chatroom>? {
-        return try {
-            transaction {
-                Chatrooms.selectAll().map {
-                    Chatroom(
-                        id = it[Chatrooms.id],
-                        ownerUid = it[ownerUid],
-                        name = it[name],
-                        description = it[description],
-                        chatroomImg = it[chatroomImg],
-                        lastMessageTimeStamp = it[lastMessageTimeStamp],
-                        lastMessage = it[lastMessage]
-                    )
-                }.sortedBy { it.lastMessageTimeStamp }.asReversed()
-            }
-        } catch (e: Exception) {
-            println("getAllChatrooms $e")
-            null
+    fun getAllChatrooms(): List<Chatroom> {
+        return transaction {
+            Chatrooms.selectAll().map {
+                Chatroom(
+                    id = it[Chatrooms.id],
+                    ownerUid = it[ownerUid],
+                    name = it[name],
+                    description = it[description],
+                    chatroomImg = it[chatroomImg],
+                    lastMessageTimeStamp = it[lastMessageTimeStamp],
+                    lastMessage = it[lastMessage]
+                )
+            }.sortedBy { it.lastMessageTimeStamp }.asReversed()
         }
     }
 }

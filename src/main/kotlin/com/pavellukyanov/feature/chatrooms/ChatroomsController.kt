@@ -59,12 +59,14 @@ fun Route.createChatroom() {
 fun Route.getAllChatrooms() {
     authenticate {
         get("api/chatrooms/getAllChatrooms") {
-            val chats = Chatrooms.getAllChatrooms()
-
-            call.respond(
-                status = HttpStatusCode.OK,
-                message = chats ?: listOf()
-            )
+            try {
+                call.respond(
+                    status = HttpStatusCode.OK,
+                    message = Chatrooms.getAllChatrooms()
+                )
+            } catch (e: Exception) {
+                call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
+            }
         }
     }
 }
