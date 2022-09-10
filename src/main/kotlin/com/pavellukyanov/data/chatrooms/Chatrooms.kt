@@ -3,6 +3,7 @@ package com.pavellukyanov.data.chatrooms
 import com.pavellukyanov.feature.chatrooms.entity.Chatroom
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Chatrooms : Table() {
@@ -25,6 +26,18 @@ object Chatrooms : Table() {
                 it[lastMessageTimeStamp] = chatroom.lastMessageTimeStamp
                 it[lastMessage] = chatroom.lastMessage
             }
+        }
+    }
+
+    fun fetchChatroom(id: Int): Int? {
+        return try {
+            transaction {
+                val chatroomModel = Chatrooms.select { Chatrooms.id.eq(id) }.single()
+                chatroomModel[Chatrooms.id]
+            }
+        } catch (e: Exception) {
+            println("fetchChatroom $e")
+            null
         }
     }
 }
