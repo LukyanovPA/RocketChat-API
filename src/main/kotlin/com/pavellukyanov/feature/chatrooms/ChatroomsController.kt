@@ -20,7 +20,7 @@ fun Route.createChatroom() {
             val description = call.request.queryParameters["description"]
             val img = call.request.queryParameters["img"]
 
-            if (name == null || description == null || userId == null) {
+            if (name == null || userId == null) {
                 call.respond(HttpStatusCode.BadRequest)
                 return@post
             } else {
@@ -39,7 +39,7 @@ fun Route.createChatroom() {
                     id = id,
                     ownerUid = userId,
                     name = name,
-                    description = description,
+                    description = description ?: "",
                     chatroomImg = img ?: "https://alenka.capital/data/preview/583/58348.jpg",
                     lastMessageTimeStamp = Calendar.getInstance().time.time,
                     lastMessage = "Hi everyone, im create a $name!"
