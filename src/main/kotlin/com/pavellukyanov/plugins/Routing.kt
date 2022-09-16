@@ -1,9 +1,6 @@
 package com.pavellukyanov.plugins
 
-import com.pavellukyanov.feature.auth.logout
-import com.pavellukyanov.feature.auth.refreshToken
-import com.pavellukyanov.feature.auth.signIn
-import com.pavellukyanov.feature.auth.signUp
+import com.pavellukyanov.feature.auth.*
 import com.pavellukyanov.feature.chatrooms.createChatroom
 import com.pavellukyanov.feature.chatrooms.getAllChatrooms
 import com.pavellukyanov.feature.users.changeAvatar
@@ -26,6 +23,7 @@ fun Application.configureRouting(
         signIn(hashingService, tokenService, tokenConfig)
         refreshToken(tokenService, tokenConfig)
         logout()
+        info()
 
         //Users
         changeAvatar()

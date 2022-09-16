@@ -233,3 +233,9 @@ fun Route.logout() {
         }
     }
 }
+
+fun Route.info() {
+    get("api/hello") {
+        call.respond(status = HttpStatusCode.OK, message = "Hello World")
+    }
+}
