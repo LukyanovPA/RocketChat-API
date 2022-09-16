@@ -7,19 +7,17 @@ import com.pavellukyanov.plugins.configureSerialization
 import com.pavellukyanov.security.hashing.SHA256HashingService
 import com.pavellukyanov.security.token.JwtTokenService
 import com.pavellukyanov.security.token.TokenConfig
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import org.jetbrains.exposed.sql.Database
 
 fun main() {
-    val config = HikariConfig("hikari.properties")
-//    val config = HikariConfig("hikarilocal.properties")
-    val dataSource = HikariDataSource(config)
-    Database.connect(dataSource)
+    Database.connect(
+        "jdbc:postgresql://localhost:5432/rocketbase", driver = "org.postgresql.Driver",
+        user = System.getenv("BD_USER"), password = System.getenv("BD_PASSWORD")
+    )
 
-    embeddedServer(Netty, port = System.getenv("PORT").toInt()) {
+    embeddedServer(Netty, port = 8080) {
         val tokenService = JwtTokenService()
         val jwtConfig = TokenConfig(
             issuer = environment.config.config("jwt.issuer").toString(),
