@@ -1,22 +1,23 @@
 package com.pavellukyanov.data.users
 
 import com.pavellukyanov.feature.auth.entity.User
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import io.ktor.server.engine.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import java.util.*
 
 object Users : Table() {
     private val uuid = Users.uuid("uuid")
     private val salt = Users.varchar("salt", 75)
     private val password = Users.varchar("password", 75)
-    private val username = Users.varchar("username", 30)
-    private val email = Users.varchar("email", 25)
+    private val username = Users.varchar("username", 25)
+    private val email = Users.varchar("email", 50)
     private val avatar = Users.varchar("avatar", 400)
 
-    fun insert(user: User) {
+    suspend fun insert(user: User) = withContext(Dispatchers.IO) {
         transaction {
             Users.insert {
                 it[username] = user.username
@@ -24,9 +25,7 @@ object Users : Table() {
                 it[email] = user.email
                 it[uuid] = user.uuid
                 it[salt] = user.salt
-                user.avatar?.let { ava ->
-                    it[avatar] = ava
-                }
+                it[avatar] = user.avatar ?: ""
             }
         }
     }

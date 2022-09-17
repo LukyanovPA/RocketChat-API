@@ -7,6 +7,7 @@ import com.pavellukyanov.plugins.configureSerialization
 import com.pavellukyanov.security.hashing.SHA256HashingService
 import com.pavellukyanov.security.token.JwtTokenService
 import com.pavellukyanov.security.token.TokenConfig
+import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import org.jetbrains.exposed.sql.Database
@@ -16,6 +17,11 @@ fun main() {
         "jdbc:postgresql://localhost:5432/rocketbase", driver = "org.postgresql.Driver",
         user = System.getenv("BD_USER"), password = System.getenv("BD_PASSWORD")
     )
+
+//    Database.connect(
+//        "jdbc:postgresql://localhost:5432/rocket-chat", driver = "org.postgresql.Driver",
+//        user = "postgres", password = "t365raUy"
+//    )
 
     embeddedServer(Netty, port = 8080) {
         val tokenService = JwtTokenService()

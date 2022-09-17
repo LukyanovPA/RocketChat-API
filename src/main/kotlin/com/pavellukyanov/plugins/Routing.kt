@@ -1,5 +1,6 @@
 package com.pavellukyanov.plugins
 
+import com.pavellukyanov.data.users.UserRepo
 import com.pavellukyanov.feature.auth.*
 import com.pavellukyanov.feature.chatrooms.createChatroom
 import com.pavellukyanov.feature.chatrooms.getAllChatrooms
@@ -19,7 +20,7 @@ fun Application.configureRouting(
 
     routing {
         //Auth
-        signUp(hashingService, tokenService, tokenConfig)
+        signUp(/*UserRepo(*/hashingService, tokenService, tokenConfig/*)*/)
         signIn(hashingService, tokenService, tokenConfig)
         refreshToken(tokenService, tokenConfig)
         logout()
