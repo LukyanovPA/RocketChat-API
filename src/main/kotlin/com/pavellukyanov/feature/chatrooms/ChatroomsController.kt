@@ -24,7 +24,7 @@ fun Route.createChatroom(chatRoomsDataSource: ChatRoomsDataSource) {
                 return@post
             } else {
                 val chatroom = Chatroom(
-                    ownerUid = userId.toString(),
+                    ownerId = userId.toString(),
                     name = name,
                     description = description ?: "",
                     chatroomImg = img ?: "https://alenka.capital/data/preview/583/58348.jpg",
