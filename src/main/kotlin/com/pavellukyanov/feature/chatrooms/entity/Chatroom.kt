@@ -1,15 +1,18 @@
 package com.pavellukyanov.feature.chatrooms.entity
 
-import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import org.bson.codecs.pojo.annotations.BsonId
+import org.bson.types.ObjectId
 
 @Serializable
 data class Chatroom(
-    @SerializedName("id") val id: Int,
-    @SerializedName("ownerUid") val ownerUid: String,
-    @SerializedName("name") val name: String,
-    @SerializedName("description") val description: String,
-    @SerializedName("chatroomImg") val chatroomImg: String?,
-    @SerializedName("lastMessageTimeStamp") val lastMessageTimeStamp: Long,
-    @SerializedName("lastMessage") val lastMessage: String
+    @Transient
+    @BsonId val id: ObjectId = ObjectId(),
+    val ownerUid: String,
+    val name: String,
+    val description: String,
+    val chatroomImg: String?,
+    val lastMessageTimeStamp: Long,
+    val lastMessage: String
 )

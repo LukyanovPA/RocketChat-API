@@ -1,6 +1,5 @@
 package com.pavellukyanov.feature.chatrooms
 
-import com.pavellukyanov.data.chatrooms.Chatrooms
 import com.pavellukyanov.feature.chatrooms.entity.Chatroom
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -8,14 +7,14 @@ import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.bson.types.ObjectId
 import java.util.*
-import kotlin.random.Random
 
-fun Route.createChatroom() {
+fun Route.createChatroom(chatRoomsDataSource: ChatRoomsDataSource) {
     authenticate {
         post("api/chatrooms/createChatroom") {
             val principal = call.principal<JWTPrincipal>()
-            val userId = principal?.getClaim("userUUID", String::class)
+            val userId = principal?.getClaim("userId", ObjectId::class)
             val name = call.request.queryParameters["name"]
             val description = call.request.queryParameters["description"]
             val img = call.request.queryParameters["img"]
@@ -24,20 +23,8 @@ fun Route.createChatroom() {
                 call.respond(HttpStatusCode.BadRequest)
                 return@post
             } else {
-                val id: Int
-
-                while (true) {
-                    val tempId = Random.nextInt()
-                    val chatId = Chatrooms.fetchChatroom(tempId)
-                    if (chatId == null) {
-                        id = tempId
-                        break
-                    }
-                }
-
                 val chatroom = Chatroom(
-                    id = id,
-                    ownerUid = userId,
+                    ownerUid = userId.toString(),
                     name = name,
                     description = description ?: "",
                     chatroomImg = img ?: "https://alenka.capital/data/preview/583/58348.jpg",
@@ -46,8 +33,8 @@ fun Route.createChatroom() {
                 )
 
                 try {
-                    Chatrooms.insert(chatroom)
-                    call.respond(status = HttpStatusCode.OK, message = true)
+                    val isInsert = chatRoomsDataSource.insert(chatroom)
+                    call.respond(status = HttpStatusCode.OK, message = isInsert)
                 } catch (e: Exception) {
                     call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
                 }
@@ -56,14 +43,12 @@ fun Route.createChatroom() {
     }
 }
 
-fun Route.getAllChatrooms() {
+fun Route.getAllChatrooms(chatRoomsDataSource: ChatRoomsDataSource) {
     authenticate {
         get("api/chatrooms/getAllChatrooms") {
             try {
-                call.respond(
-                    status = HttpStatusCode.OK,
-                    message = Chatrooms.getAllChatrooms()
-                )
+                val chats = chatRoomsDataSource.getAllChatrooms()
+                call.respond(status = HttpStatusCode.OK, message = chats)
             } catch (e: Exception) {
                 call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
             }

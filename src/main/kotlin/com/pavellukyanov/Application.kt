@@ -1,5 +1,6 @@
 package com.pavellukyanov
 
+import com.pavellukyanov.data.chatrooms.ChatRoomsDataSourceImpl
 import com.pavellukyanov.data.users.UserDataSourceImpl
 import com.pavellukyanov.plugins.configureMonitoring
 import com.pavellukyanov.plugins.configureRouting
@@ -22,6 +23,7 @@ fun main() {
         ).coroutine
             .getDatabase(dbName)
         val userDataSource = UserDataSourceImpl(db)
+        val chatRoomsDataSource = ChatRoomsDataSourceImpl(db)
         val tokenService = JwtTokenService()
         val jwtConfig = TokenConfig(
             issuer = environment.config.config("jwt.issuer").toString(),
@@ -33,6 +35,6 @@ fun main() {
         configureSerialization()
         configureMonitoring()
         configureSecurity(jwtConfig)
-        configureRouting(tokenService, jwtConfig, userDataSource)
+        configureRouting(tokenService, jwtConfig, userDataSource, chatRoomsDataSource)
     }.start(wait = true)
 }

@@ -1,6 +1,7 @@
 package com.pavellukyanov.plugins
 
 import com.pavellukyanov.feature.auth.*
+import com.pavellukyanov.feature.chatrooms.ChatRoomsDataSource
 import com.pavellukyanov.feature.chatrooms.createChatroom
 import com.pavellukyanov.feature.chatrooms.getAllChatrooms
 import com.pavellukyanov.feature.users.changeAvatar
@@ -13,7 +14,8 @@ import io.ktor.server.routing.*
 fun Application.configureRouting(
     tokenService: TokenService,
     tokenConfig: TokenConfig,
-    userDataSource: UserDataSource
+    userDataSource: UserDataSource,
+    chatRoomsDataSource: ChatRoomsDataSource
 ) {
     routing {
 //        trace { application.log.trace(it.buildText()) }
@@ -26,12 +28,12 @@ fun Application.configureRouting(
             info()
 
             //Users
-            changeAvatar()
+            changeAvatar(userDataSource)
             getCurrentUser(userDataSource)
 
             //Chatrooms
-            createChatroom()
-            getAllChatrooms()
+            createChatroom(chatRoomsDataSource)
+            getAllChatrooms(chatRoomsDataSource)
         }
     }
 }
