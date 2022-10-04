@@ -1,10 +1,11 @@
 package com.pavellukyanov.data.users.response
 
+import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class TokenResponse(
-    val token: String?,
-    val refreshToken: String?,
-    val message: String?
+    @SerializedName("token") val token: String?,
+    @SerializedName("refreshToken") val refreshToken: String?,
+    @SerializedName("message") val message: String?
 )

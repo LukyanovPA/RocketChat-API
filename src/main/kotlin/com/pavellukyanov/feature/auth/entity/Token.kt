@@ -1,6 +1,9 @@
 package com.pavellukyanov.feature.auth.entity
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Token(
-    val uuid: String,
+    val userId: String,
     val refreshToken: String
 )

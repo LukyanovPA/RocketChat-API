@@ -1,21 +1,21 @@
 package com.pavellukyanov.data.users
 
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Tokens : Table() {
     private val uuid = Tokens.varchar("uuid", 1000)
     private val refreshToken = Tokens.varchar("refreshToken", 1000)
 
-    fun insert(uuidIn: String, refreshTokenIn: String) = try {
-        transaction {
+    suspend fun insert(uuidIn: String, refreshTokenIn: String) {
+        newSuspendedTransaction(Dispatchers.IO) {
             Tokens.insert {
                 it[uuid] = uuidIn
                 it[refreshToken] = refreshTokenIn
             }
         }
-    } catch (e: java.lang.Exception) {
-        println("insert $e")
     }
 
     fun getUuid(refreshTokenIn: String): String? =

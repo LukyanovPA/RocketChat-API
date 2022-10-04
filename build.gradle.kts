@@ -4,6 +4,7 @@ val logback_version: String by project
 val postgresql_version: String by project
 val exposed_version: String by project
 val commons_codec_version: String by project
+val kmongo_version: String by project
 
 plugins {
     application
@@ -33,11 +34,15 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
+    implementation("io.ktor:ktor-serialization-gson:$ktor_version")
     implementation("io.ktor:ktor-server-call-logging-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-auth-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+
+    implementation("org.litote.kmongo:kmongo:$kmongo_version")
+    implementation("org.litote.kmongo:kmongo-coroutine:$kmongo_version")
 
     implementation("org.postgresql:postgresql:$postgresql_version")
     implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
@@ -80,7 +85,7 @@ task("deploy") {
         doLast {
             val knownHosts = File.createTempFile("knownhosts", "txt")
             val user = "root"
-            val host = "78.40.216.136"
+            val host = "188.225.9.194"
             val key = file("keys/rochetchatkey")
             val jarFileName = "com.pavellukyanov.rocket-chat-$version-all.jar"
             try {

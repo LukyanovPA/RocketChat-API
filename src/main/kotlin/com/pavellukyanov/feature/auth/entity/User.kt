@@ -1,12 +1,12 @@
 package com.pavellukyanov.feature.auth.entity
 
-import java.util.UUID
+import org.bson.codecs.pojo.annotations.BsonId
+import org.bson.types.ObjectId
 
 data class User(
-    val uuid: UUID,
+    @BsonId val id: ObjectId = ObjectId(),
     val username: String,
     val password: String,
     val email: String,
-    val salt: String,
     val avatar: String?
 )
