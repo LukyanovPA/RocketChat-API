@@ -167,12 +167,23 @@ fun Route.sendMessage(
                     return@post
                 }
                 val userId = principal.getClaim("userId", ObjectId::class)
+                val timeStamp = Calendar.getInstance().time.time
                 val user = withContext(Dispatchers.IO) { userDataSource.getCurrentUser(userId!!) }
+
+                launch(Dispatchers.IO) {
+                    val newChatroom = chatRoomsDataSource.getAllChatrooms().find { it.id.toString() == chatroomId }?.copy(
+                        lastMessageTimeStamp = timeStamp,
+                        lastMessage = message
+                    )
+
+                    newChatroom?.let { chatRoomsDataSource.updateChatroom(it) }
+                }
+
                 val isMessageInsert = withContext(Dispatchers.IO) {
                     chatRoomsDataSource.insertMessages(
                         Message(
                             chatroomId = chatroomId,
-                            messageTimeStamp = Calendar.getInstance().time.time,
+                            messageTimeStamp = timeStamp,
                             ownerId = userId.toString(),
                             ownerUsername = user?.username!!,
                             ownerAvatar = user.avatar!!,
