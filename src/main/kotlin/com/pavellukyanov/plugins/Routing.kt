@@ -1,10 +1,7 @@
 package com.pavellukyanov.plugins
 
 import com.pavellukyanov.feature.auth.*
-import com.pavellukyanov.feature.chatrooms.ChatRoomsDataSource
-import com.pavellukyanov.feature.chatrooms.createChatroom
-import com.pavellukyanov.feature.chatrooms.getAllChatrooms
-import com.pavellukyanov.feature.chatrooms.uploadChatRoomImg
+import com.pavellukyanov.feature.chatrooms.*
 import com.pavellukyanov.feature.users.changeAvatar
 import com.pavellukyanov.feature.users.getCurrentUser
 import com.pavellukyanov.security.token.TokenConfig
@@ -34,8 +31,10 @@ fun Application.configureRouting(
 
             //Chatrooms
             uploadChatRoomImg()
-            createChatroom(chatRoomsDataSource)
+            createChatroom(chatRoomsDataSource, userDataSource)
             getAllChatrooms(chatRoomsDataSource)
+            getMessages(chatRoomsDataSource)
+            sendMessage(chatRoomsDataSource, userDataSource)
         }
     }
 }

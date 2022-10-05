@@ -1,7 +1,9 @@
 package com.pavellukyanov.feature.chatrooms
 
+import com.pavellukyanov.data.chatrooms.response.UploadChatImgResponse
+import com.pavellukyanov.feature.auth.UserDataSource
 import com.pavellukyanov.feature.chatrooms.entity.Chatroom
-import com.pavellukyanov.feature.chatrooms.entity.UploadChatImgResponse
+import com.pavellukyanov.feature.chatrooms.entity.Message
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -10,6 +12,9 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.bson.types.ObjectId
 import java.io.File
 import java.util.*
@@ -58,12 +63,18 @@ fun Route.uploadChatRoomImg() {
     }
 }
 
-fun Route.createChatroom(chatRoomsDataSource: ChatRoomsDataSource) {
+fun Route.createChatroom(
+    chatRoomsDataSource: ChatRoomsDataSource,
+    userDataSource: UserDataSource
+) {
     authenticate {
         post("api/chatrooms/createChatroom") {
             try {
-                val principal = call.principal<JWTPrincipal>()
-                val userId = principal?.getClaim("userId", ObjectId::class)
+                val principal = call.principal<JWTPrincipal>() ?: kotlin.run {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                val userId = principal.getClaim("userId", ObjectId::class)
                 val name = call.request.queryParameters["name"]
                 val description = call.request.queryParameters["description"]
                 val img = call.request.queryParameters["img"]
@@ -80,13 +91,24 @@ fun Route.createChatroom(chatRoomsDataSource: ChatRoomsDataSource) {
                         lastMessageTimeStamp = Calendar.getInstance().time.time,
                         lastMessage = "Hi everyone, im create a $name!"
                     )
+                    launch(Dispatchers.IO) { chatRoomsDataSource.insertChatroom(chatroom) }
 
-                    try {
-                        val isInsert = chatRoomsDataSource.insert(chatroom)
-                        call.respond(status = HttpStatusCode.OK, message = isInsert)
-                    } catch (e: Exception) {
-                        call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
+                    val isMessageInsert = withContext(Dispatchers.IO) {
+                        val user = userDataSource.getCurrentUser(userId)!!
+
+                        chatRoomsDataSource.insertMessages(
+                            Message(
+                                chatroomId = chatroom.id.toString(),
+                                messageTimeStamp = chatroom.lastMessageTimeStamp,
+                                ownerId = userId.toString(),
+                                ownerUsername = user.username,
+                                ownerAvatar = user.avatar!!,
+                                message = chatroom.lastMessage
+                            )
+                        )
                     }
+
+                    call.respond(status = HttpStatusCode.OK, message = isMessageInsert)
                 }
             } catch (e: Exception) {
                 call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
@@ -101,6 +123,64 @@ fun Route.getAllChatrooms(chatRoomsDataSource: ChatRoomsDataSource) {
             try {
                 val chats = chatRoomsDataSource.getAllChatrooms()
                 call.respond(status = HttpStatusCode.OK, message = chats)
+            } catch (e: Exception) {
+                call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
+            }
+        }
+    }
+}
+
+fun Route.getMessages(chatRoomsDataSource: ChatRoomsDataSource) {
+    authenticate {
+        get("api/chatrooms/getMessages") {
+            try {
+                val chatroomId = call.request.queryParameters["chatroomId"] ?: kotlin.run {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@get
+                }
+                val messages = chatRoomsDataSource.getMessages(chatroomId)
+                call.respond(status = HttpStatusCode.OK, message = messages)
+            } catch (e: Exception) {
+                call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
+            }
+        }
+    }
+}
+
+fun Route.sendMessage(
+    chatRoomsDataSource: ChatRoomsDataSource,
+    userDataSource: UserDataSource
+) {
+    authenticate {
+        post("api/chatrooms/sendMessage") {
+            try {
+                val principal = call.principal<JWTPrincipal>() ?: kotlin.run {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                val chatroomId = call.request.queryParameters["chatroomId"] ?: kotlin.run {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                val message = call.request.queryParameters["message"] ?: kotlin.run {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                val userId = principal.getClaim("userId", ObjectId::class)
+                val user = withContext(Dispatchers.IO) { userDataSource.getCurrentUser(userId!!) }
+                val isMessageInsert = withContext(Dispatchers.IO) {
+                    chatRoomsDataSource.insertMessages(
+                        Message(
+                            chatroomId = chatroomId,
+                            messageTimeStamp = Calendar.getInstance().time.time,
+                            ownerId = userId.toString(),
+                            ownerUsername = user?.username!!,
+                            ownerAvatar = user.avatar!!,
+                            message = message
+                        )
+                    )
+                }
+                call.respond(status = HttpStatusCode.OK, message = isMessageInsert)
             } catch (e: Exception) {
                 call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
             }
