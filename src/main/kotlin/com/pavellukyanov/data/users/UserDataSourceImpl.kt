@@ -24,8 +24,8 @@ class UserDataSourceImpl(
     override suspend fun getCurrentUser(id: ObjectId): User? =
         users.findOne(User::id eq id)
 
-    override suspend fun changeUserAvatar(id: ObjectId, avatarIn: String): Boolean =
-        users.updateOne(Filters.eq("id", id), Updates.set("avatar", avatarIn)).wasAcknowledged()
+    override suspend fun changeUserAvatar(user: User): Boolean =
+        users.updateOne(Filters.eq("_id", user.id), Updates.set("avatar", user.avatar)).wasAcknowledged()
 
     override suspend fun insertToken(token: Token): Boolean =
         tokens.insertOne(token).wasAcknowledged()

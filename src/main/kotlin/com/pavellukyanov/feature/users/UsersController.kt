@@ -17,51 +17,37 @@ fun Route.changeAvatar(userDataSource: UserDataSource) {
     authenticate {
         post("api/users/changeAvatar") {
             try {
-
                 val principal = call.principal<JWTPrincipal>() ?: kotlin.run {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
                 }
-                var fileDescription = ""
                 var fileName = ""
-                val userId = principal.getClaim("userId", String::class)
+                val userId = principal.getClaim("userId", ObjectId::class)
+                val user = userDataSource.getCurrentUser(userId!!)
 
                 val multipartData = call.receiveMultipart()
 
                 multipartData.forEachPart { part ->
                     when (part) {
-                        is PartData.FormItem -> {
-                            fileDescription = part.value
-                        }
-
                         is PartData.FileItem -> {
                             fileName = part.originalFileName as String
                             var fileBytes = part.streamProvider().readBytes()
-                            File("/home/share/uploads/avatars/$userId-$fileName").writeBytes(fileBytes)
+                            File("/var/www/html/uploads/avatars/$userId-$fileName").writeBytes(fileBytes)
                         }
-
                         else -> {}
                     }
                 }
 
-                call.respondText("$fileDescription is uploaded to '/home/share/uploads/avatars/$userId-$fileName'")
+                val changedUser = user?.copy(
+                    avatar = "http://188.225.9.194/uploads/avatars/$userId-$fileName"
+                )!!
+
+                val isAvatarChanged = userDataSource.changeUserAvatar(changedUser)
+
+                call.respond(status = HttpStatusCode.OK, message = isAvatarChanged)
             } catch (e: Exception) {
                 call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
             }
-
-//            val request = call.request.queryParameters["avatar"]
-//
-//            if (request == null) {
-//                call.respond(status = HttpStatusCode.BadRequest, message = "No avatar link")
-//                return@post
-//            } else {
-//                try {
-//                    val insert = userDataSource.changeUserAvatar(ObjectId(userId), request)
-//                    call.respond(status = HttpStatusCode.OK, message = insert)
-//                } catch (e: Exception) {
-//                    call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
-//                }
-//            }
         }
     }
 }

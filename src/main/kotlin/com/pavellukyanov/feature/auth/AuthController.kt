@@ -227,7 +227,7 @@ fun Route.logout(userDataSource: UserDataSource) {
             val userId = principal?.getClaim("userId", String::class)
             val state = withContext(Dispatchers.IO) { userDataSource.deleteToken(userId) }
 
-            if (state) call.respond(HttpStatusCode.OK) else call.respond(HttpStatusCode.Conflict)
+            if (state) call.respond(HttpStatusCode.OK, true) else call.respond(HttpStatusCode.Conflict)
         }
     }
 }

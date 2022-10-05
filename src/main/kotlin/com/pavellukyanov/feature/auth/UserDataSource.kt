@@ -8,7 +8,7 @@ interface UserDataSource {
     suspend fun getUserByEmail(email: String): User?
     suspend fun insertUser(user: User): Boolean
     suspend fun getCurrentUser(id: ObjectId): User?
-    suspend fun changeUserAvatar(id: ObjectId, avatarIn: String): Boolean
+    suspend fun changeUserAvatar(user: User): Boolean
     suspend fun insertToken(token: Token): Boolean
     suspend fun getUserIdFromTokens(refreshTokenIn: String): String?
     suspend fun getRefreshToken(userId: String): String?

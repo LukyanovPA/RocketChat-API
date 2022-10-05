@@ -14,5 +14,5 @@ class ChatRoomsDataSourceImpl(
         chatrooms.insertOne(chatroom).wasAcknowledged()
 
     override suspend fun getAllChatrooms(): List<Chatroom> =
-        chatrooms.collection.find().toList()
+        chatrooms.collection.find().toList().sortedByDescending { it.lastMessageTimeStamp }
 }
