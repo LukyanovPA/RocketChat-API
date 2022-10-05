@@ -15,8 +15,7 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import java.util.*
 
 fun Route.signUp(
@@ -120,13 +119,11 @@ fun Route.signIn(
                 return@post
             }
 
-            var refreshToken = withContext(Dispatchers.IO) {
-                userDataSource.getRefreshToken(user.id.toString())
-            }
+            var refreshToken = userDataSource.getRefreshToken(user.id.toString())
 
             if (refreshToken == null) {
                 val newRefreshToken = UUID.randomUUID().toString()
-                withContext(Dispatchers.IO) {
+                launch {
                     userDataSource.insertToken(
                         Token(
                             userId = user.id.toString(),
@@ -171,9 +168,7 @@ fun Route.refreshToken(
             call.respond(HttpStatusCode.BadRequest)
             return@post
         } else {
-            val userId = withContext(Dispatchers.IO) {
-                userDataSource.getUserIdFromTokens(request)
-            }
+            val userId = userDataSource.getUserIdFromTokens(request)
 
             if (userId == null) {
                 call.respond(
@@ -188,7 +183,7 @@ fun Route.refreshToken(
             } else {
                 val newRefreshToken = UUID.randomUUID().toString()
 
-                withContext(Dispatchers.IO) {
+                launch {
                     userDataSource.updateToken(
                         Token(
                             userId = userId,
@@ -197,15 +192,13 @@ fun Route.refreshToken(
                     )
                 }
 
-                val token = withContext(Dispatchers.IO) {
-                    tokenService.generate(
-                        config = tokenConfig,
-                        TokenClaim(
-                            name = "userId",
-                            value = userId
-                        )
+                val token = tokenService.generate(
+                    config = tokenConfig,
+                    TokenClaim(
+                        name = "userId",
+                        value = userId
                     )
-                }
+                )
 
                 call.respond(
                     status = HttpStatusCode.OK,
@@ -225,7 +218,7 @@ fun Route.logout(userDataSource: UserDataSource) {
         get("api/auth/logout") {
             val principal = call.principal<JWTPrincipal>()
             val userId = principal?.getClaim("userId", String::class)
-            val state = withContext(Dispatchers.IO) { userDataSource.deleteToken(userId) }
+            val state = userDataSource.deleteToken(userId)
 
             if (state) call.respond(HttpStatusCode.OK, true) else call.respond(HttpStatusCode.Conflict)
         }

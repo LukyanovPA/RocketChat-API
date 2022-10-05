@@ -14,7 +14,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.bson.types.ObjectId
 import java.io.File
 import java.util.*
@@ -32,24 +31,26 @@ fun Route.uploadChatRoomImg() {
 
                 val multipartData = call.receiveMultipart()
 
-                multipartData.forEachPart { part ->
-                    when (part) {
-                        is PartData.FileItem -> {
-                            fileName = part.originalFileName as String
-                            var fileBytes = part.streamProvider().readBytes()
-                            File("/var/www/html/uploads/chats/$userId-$fileName").writeBytes(fileBytes)
+                launch(Dispatchers.IO) {
+                    multipartData.forEachPart { part ->
+                        when (part) {
+                            is PartData.FileItem -> {
+                                fileName = part.originalFileName as String
+                                var fileBytes = part.streamProvider().readBytes()
+                                File("/var/www/html/uploads/chats/$userId-$fileName").writeBytes(fileBytes)
+                            }
+                            else -> {}
                         }
-                        else -> {}
                     }
-                }
-                call.respond(
-                    status = HttpStatusCode.OK,
-                    message = UploadChatImgResponse(
-                        success = true,
-                        src = "http://188.225.9.194/uploads/chats/$userId-$fileName",
-                        errorMessage = null
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = UploadChatImgResponse(
+                            success = true,
+                            src = "http://188.225.9.194/uploads/chats/$userId-$fileName",
+                            errorMessage = null
+                        )
                     )
-                )
+                }
             } catch (e: Exception) {
                 call.respond(
                     status = HttpStatusCode.Conflict, message = UploadChatImgResponse(
@@ -91,22 +92,18 @@ fun Route.createChatroom(
                         lastMessageTimeStamp = Calendar.getInstance().time.time,
                         lastMessage = "Hi everyone, im create a $name!"
                     )
-                    launch(Dispatchers.IO) { chatRoomsDataSource.insertChatroom(chatroom) }
-
-                    val isMessageInsert = withContext(Dispatchers.IO) {
-                        val user = userDataSource.getCurrentUser(userId)!!
-
-                        chatRoomsDataSource.insertMessages(
-                            Message(
-                                chatroomId = chatroom.id.toString(),
-                                messageTimeStamp = chatroom.lastMessageTimeStamp,
-                                ownerId = userId.toString(),
-                                ownerUsername = user.username,
-                                ownerAvatar = user.avatar!!,
-                                message = chatroom.lastMessage
-                            )
+                    launch { chatRoomsDataSource.insertChatroom(chatroom) }
+                    val user = userDataSource.getCurrentUser(userId)!!
+                    val isMessageInsert = chatRoomsDataSource.insertMessages(
+                        Message(
+                            chatroomId = chatroom.id.toString(),
+                            messageTimeStamp = chatroom.lastMessageTimeStamp,
+                            ownerId = userId.toString(),
+                            ownerUsername = user.username,
+                            ownerAvatar = user.avatar!!,
+                            message = chatroom.lastMessage
                         )
-                    }
+                    )
 
                     call.respond(status = HttpStatusCode.OK, message = isMessageInsert)
                 }
@@ -168,29 +165,29 @@ fun Route.sendMessage(
                 }
                 val userId = principal.getClaim("userId", ObjectId::class)
                 val timeStamp = Calendar.getInstance().time.time
-                val user = withContext(Dispatchers.IO) { userDataSource.getCurrentUser(userId!!) }
+                val user = userDataSource.getCurrentUser(userId!!)
 
-                launch(Dispatchers.IO) {
-                    val newChatroom = chatRoomsDataSource.getAllChatrooms().find { it.id.toString() == chatroomId }?.copy(
-                        lastMessageTimeStamp = timeStamp,
-                        lastMessage = message
-                    )
+                launch {
+                    val newChatroom = chatRoomsDataSource.getAllChatrooms()
+                        .find { it.id.toString() == chatroomId }
+                        ?.copy(
+                            lastMessageTimeStamp = timeStamp,
+                            lastMessage = message
+                        )
 
                     newChatroom?.let { chatRoomsDataSource.updateChatroom(it) }
                 }
 
-                val isMessageInsert = withContext(Dispatchers.IO) {
-                    chatRoomsDataSource.insertMessages(
-                        Message(
-                            chatroomId = chatroomId,
-                            messageTimeStamp = timeStamp,
-                            ownerId = userId.toString(),
-                            ownerUsername = user?.username!!,
-                            ownerAvatar = user.avatar!!,
-                            message = message
-                        )
+                val isMessageInsert = chatRoomsDataSource.insertMessages(
+                    Message(
+                        chatroomId = chatroomId,
+                        messageTimeStamp = timeStamp,
+                        ownerId = userId.toString(),
+                        ownerUsername = user?.username!!,
+                        ownerAvatar = user.avatar!!,
+                        message = message
                     )
-                }
+                )
                 call.respond(status = HttpStatusCode.OK, message = isMessageInsert)
             } catch (e: Exception) {
                 call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)

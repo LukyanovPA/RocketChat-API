@@ -4,9 +4,10 @@ import com.mongodb.client.model.Filters
 import com.pavellukyanov.feature.chatrooms.ChatRoomsDataSource
 import com.pavellukyanov.feature.chatrooms.entity.Chatroom
 import com.pavellukyanov.feature.chatrooms.entity.Message
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.coroutine.toList
-import org.litote.kmongo.eq
 
 class ChatRoomsDataSourceImpl(
     db: CoroutineDatabase
@@ -14,21 +15,23 @@ class ChatRoomsDataSourceImpl(
     private val chatrooms = db.getCollection<Chatroom>()
     private val messages = db.getCollection<Message>()
 
-    override suspend fun insertChatroom(chatroom: Chatroom): Boolean =
+    override suspend fun insertChatroom(chatroom: Chatroom): Boolean = withContext(Dispatchers.IO) {
         chatrooms.insertOne(chatroom).wasAcknowledged()
+    }
 
-    override suspend fun getAllChatrooms(): List<Chatroom> =
+    override suspend fun getAllChatrooms(): List<Chatroom> = withContext(Dispatchers.IO) {
         chatrooms.collection.find().toList().sortedByDescending { it.lastMessageTimeStamp }
+    }
 
-    override suspend fun updateChatroom(chatroom: Chatroom): Boolean =
-        chatrooms.replaceOne(
-            Filters.eq("id", chatroom.id),
-            chatroom
-        ).wasAcknowledged()
+    override suspend fun updateChatroom(chatroom: Chatroom): Boolean = withContext(Dispatchers.IO) {
+        chatrooms.replaceOne(Filters.eq("id", chatroom.id), chatroom).wasAcknowledged()
+    }
 
-    override suspend fun insertMessages(messages: Message): Boolean =
-        this.messages.insertOne(messages).wasAcknowledged()
+    override suspend fun insertMessages(messages: Message): Boolean = withContext(Dispatchers.IO) {
+        this@ChatRoomsDataSourceImpl.messages.insertOne(messages).wasAcknowledged()
+    }
 
-    override suspend fun getMessages(chatroomId: String): List<Message> =
+    override suspend fun getMessages(chatroomId: String): List<Message> = withContext(Dispatchers.IO) {
         messages.find().toList().filter { it.chatroomId == chatroomId }
+    }
 }

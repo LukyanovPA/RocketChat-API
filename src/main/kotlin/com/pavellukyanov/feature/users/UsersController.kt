@@ -10,6 +10,9 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.bson.types.ObjectId
 import java.io.File
 
@@ -27,24 +30,26 @@ fun Route.changeAvatar(userDataSource: UserDataSource) {
 
                 val multipartData = call.receiveMultipart()
 
-                multipartData.forEachPart { part ->
-                    when (part) {
-                        is PartData.FileItem -> {
-                            fileName = part.originalFileName as String
-                            var fileBytes = part.streamProvider().readBytes()
-                            File("/var/www/html/uploads/avatars/$userId-$fileName").writeBytes(fileBytes)
+                launch(Dispatchers.IO) {
+                    multipartData.forEachPart { part ->
+                        when (part) {
+                            is PartData.FileItem -> {
+                                fileName = part.originalFileName as String
+                                var fileBytes = part.streamProvider().readBytes()
+                                File("/var/www/html/uploads/avatars/$userId-$fileName").writeBytes(fileBytes)
+                            }
+                            else -> {}
                         }
-                        else -> {}
                     }
+
+                    val changedUser = user?.copy(
+                        avatar = "http://188.225.9.194/uploads/avatars/$userId-$fileName"
+                    )!!
+
+                    val isAvatarChanged = userDataSource.changeUserAvatar(changedUser)
+
+                    call.respond(status = HttpStatusCode.OK, message = isAvatarChanged)
                 }
-
-                val changedUser = user?.copy(
-                    avatar = "http://188.225.9.194/uploads/avatars/$userId-$fileName"
-                )!!
-
-                val isAvatarChanged = userDataSource.changeUserAvatar(changedUser)
-
-                call.respond(status = HttpStatusCode.OK, message = isAvatarChanged)
             } catch (e: Exception) {
                 call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
             }
