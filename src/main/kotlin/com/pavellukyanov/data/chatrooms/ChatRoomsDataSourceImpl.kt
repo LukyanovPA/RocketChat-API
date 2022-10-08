@@ -34,4 +34,14 @@ class ChatRoomsDataSourceImpl(
     override suspend fun getMessages(chatroomId: String): List<Message> = withContext(Dispatchers.IO) {
         messages.find().toList().filter { it.chatroomId == chatroomId }
     }
+
+    override suspend fun updateUserAvatar(ownerId: String, avatar: String): Boolean = withContext(Dispatchers.IO) {
+        messages.collection.find().toList().filter { it.ownerId == ownerId }.forEach { message ->
+            val replace = message.copy(
+                ownerAvatar = avatar
+            )
+            messages.replaceOne(Filters.eq("id", message.id), replace)
+        }
+        return@withContext true
+    }
 }

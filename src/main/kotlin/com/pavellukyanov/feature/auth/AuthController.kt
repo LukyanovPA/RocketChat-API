@@ -51,7 +51,7 @@ fun Route.signUp(
                     username = request.username,
                     password = request.password,
                     email = request.email,
-                    avatar = null
+                    avatar = "https://cdn0.iconfinder.com/data/icons/communication-456/24/account_profile_user_contact_person_avatar_placeholder-1024.png"
                 )
                 val token = tokenService.generate(
                     config = tokenConfig,

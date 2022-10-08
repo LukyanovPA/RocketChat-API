@@ -184,7 +184,7 @@ fun Route.sendMessage(
                         messageTimeStamp = timeStamp,
                         ownerId = userId.toString(),
                         ownerUsername = user?.username!!,
-                        ownerAvatar = user.avatar!!,
+                        ownerAvatar = user.avatar,
                         message = message
                     )
                 )

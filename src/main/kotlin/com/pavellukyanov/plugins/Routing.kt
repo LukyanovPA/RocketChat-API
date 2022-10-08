@@ -26,7 +26,7 @@ fun Application.configureRouting(
             info()
 
             //Users
-            changeAvatar(userDataSource)
+            changeAvatar(chatRoomsDataSource, userDataSource)
             getCurrentUser(userDataSource)
 
             //Chatrooms
