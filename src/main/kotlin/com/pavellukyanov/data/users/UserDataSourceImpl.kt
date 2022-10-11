@@ -2,9 +2,8 @@ package com.pavellukyanov.data.users
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
-import com.pavellukyanov.feature.auth.UserDataSource
-import com.pavellukyanov.feature.auth.entity.Token
-import com.pavellukyanov.feature.auth.entity.User
+import com.pavellukyanov.domain.auth.entity.Token
+import com.pavellukyanov.domain.auth.entity.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.bson.types.ObjectId

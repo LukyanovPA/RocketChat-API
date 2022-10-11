@@ -1,13 +1,12 @@
-package com.pavellukyanov.feature.chatrooms.entity
+package com.pavellukyanov.domain.chatrooms.entity
 
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
-import org.litote.kmongo.Id
-import org.litote.kmongo.newId
+import org.bson.codecs.pojo.annotations.BsonId
+import org.bson.types.ObjectId
 
 @Serializable
 data class Message(
-    @Contextual val id: Id<Message> = newId(),
+    @BsonId val id: String = ObjectId().toString(),
     val chatroomId: String,
     val messageTimeStamp: Long,
     val ownerId: String,

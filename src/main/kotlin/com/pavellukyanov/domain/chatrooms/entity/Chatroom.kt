@@ -1,4 +1,4 @@
-package com.pavellukyanov.feature.chatrooms.entity
+package com.pavellukyanov.domain.chatrooms.entity
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable

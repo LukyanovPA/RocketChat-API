@@ -1,9 +1,13 @@
 package com.pavellukyanov.feature.chatrooms
 
-import com.pavellukyanov.data.chatrooms.response.UploadChatImgResponse
-import com.pavellukyanov.feature.auth.UserDataSource
-import com.pavellukyanov.feature.chatrooms.entity.Chatroom
-import com.pavellukyanov.feature.chatrooms.entity.Message
+import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
+import com.pavellukyanov.data.users.UserDataSource
+import com.pavellukyanov.domain.chatrooms.ChatRoomInteractor
+import com.pavellukyanov.domain.chatrooms.entity.ChatSession
+import com.pavellukyanov.domain.chatrooms.entity.Chatroom
+import com.pavellukyanov.domain.chatrooms.entity.Message
+import com.pavellukyanov.domain.chatrooms.entity.UploadChatImgResponse
+import com.pavellukyanov.utils.MemberAlreadyExistsException
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -12,7 +16,11 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
+import io.ktor.server.websocket.*
+import io.ktor.websocket.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import org.bson.types.ObjectId
 import java.io.File
@@ -163,6 +171,7 @@ fun Route.sendMessage(
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
                 }
+
                 val userId = principal.getClaim("userId", ObjectId::class)
                 val timeStamp = Calendar.getInstance().time.time
                 val user = userDataSource.getCurrentUser(userId!!)
@@ -192,6 +201,53 @@ fun Route.sendMessage(
             } catch (e: Exception) {
                 call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
             }
+        }
+    }
+}
+
+fun Route.sendMessageWebSocket(
+    chatRoomInteractor: ChatRoomInteractor,
+    userDataSource: UserDataSource
+) {
+    webSocket("api/chat/send/{id?}") {
+        val session = call.sessions.get<ChatSession>()
+        if (session == null) {
+            close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No session."))
+            return@webSocket
+        }
+
+        val userId = ObjectId(session.userId)
+
+        val user = userDataSource.getCurrentUser(userId) ?: kotlin.run {
+            call.respond(HttpStatusCode.BadRequest)
+            return@webSocket
+        }
+        val chatRoomId = call.parameters["id"] ?: kotlin.run {
+            call.respond(HttpStatusCode.BadRequest)
+            return@webSocket
+        }
+
+        try {
+            chatRoomInteractor.onJoin(
+                user = user,
+                socket = this
+            )
+
+            incoming.consumeEach { frame ->
+                if (frame is Frame.Text) {
+                    chatRoomInteractor.sendMessage(
+                        chatRoomId = chatRoomId,
+                        message = frame.readText(),
+                        user = user
+                    )
+                }
+            }
+        } catch (e: MemberAlreadyExistsException) {
+            call.respond(HttpStatusCode.Conflict)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            chatRoomInteractor.tryDisconnect(user)
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.pavellukyanov.feature.auth.entity
+package com.pavellukyanov.domain.auth.entity
 
 import kotlinx.serialization.Serializable
 

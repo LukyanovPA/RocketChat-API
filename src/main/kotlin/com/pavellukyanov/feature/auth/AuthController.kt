@@ -1,10 +1,11 @@
 package com.pavellukyanov.feature.auth
 
-import com.pavellukyanov.data.users.request.SignInRequest
-import com.pavellukyanov.data.users.request.SignUpRequest
-import com.pavellukyanov.data.users.response.TokenResponse
-import com.pavellukyanov.feature.auth.entity.Token
-import com.pavellukyanov.feature.auth.entity.User
+import com.pavellukyanov.data.users.UserDataSource
+import com.pavellukyanov.domain.users.entity.request.SignInRequest
+import com.pavellukyanov.domain.users.entity.request.SignUpRequest
+import com.pavellukyanov.domain.users.entity.response.TokenResponse
+import com.pavellukyanov.domain.auth.entity.Token
+import com.pavellukyanov.domain.auth.entity.User
 import com.pavellukyanov.security.token.TokenClaim
 import com.pavellukyanov.security.token.TokenConfig
 import com.pavellukyanov.security.token.TokenService

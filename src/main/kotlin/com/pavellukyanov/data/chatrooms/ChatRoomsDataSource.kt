@@ -1,7 +1,7 @@
-package com.pavellukyanov.feature.chatrooms
+package com.pavellukyanov.data.chatrooms
 
-import com.pavellukyanov.feature.chatrooms.entity.Chatroom
-import com.pavellukyanov.feature.chatrooms.entity.Message
+import com.pavellukyanov.domain.chatrooms.entity.Chatroom
+import com.pavellukyanov.domain.chatrooms.entity.Message
 
 interface ChatRoomsDataSource {
     suspend fun insertChatroom(chatroom: Chatroom): Boolean

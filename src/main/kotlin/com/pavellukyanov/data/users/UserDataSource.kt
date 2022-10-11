@@ -1,7 +1,7 @@
-package com.pavellukyanov.feature.auth
+package com.pavellukyanov.data.users
 
-import com.pavellukyanov.feature.auth.entity.Token
-import com.pavellukyanov.feature.auth.entity.User
+import com.pavellukyanov.domain.auth.entity.Token
+import com.pavellukyanov.domain.auth.entity.User
 import org.bson.types.ObjectId
 
 interface UserDataSource {

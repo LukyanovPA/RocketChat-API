@@ -1,4 +1,4 @@
-package com.pavellukyanov.data.users.response
+package com.pavellukyanov.domain.users.entity.response
 
 import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable

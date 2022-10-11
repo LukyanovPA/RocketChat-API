@@ -1,4 +1,4 @@
-package com.pavellukyanov.data.users.request
+package com.pavellukyanov.domain.users.entity.request
 
 import kotlinx.serialization.Serializable
 

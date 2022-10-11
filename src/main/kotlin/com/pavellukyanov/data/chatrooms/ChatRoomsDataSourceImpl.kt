@@ -1,9 +1,8 @@
 package com.pavellukyanov.data.chatrooms
 
 import com.mongodb.client.model.Filters
-import com.pavellukyanov.feature.chatrooms.ChatRoomsDataSource
-import com.pavellukyanov.feature.chatrooms.entity.Chatroom
-import com.pavellukyanov.feature.chatrooms.entity.Message
+import com.pavellukyanov.domain.chatrooms.entity.Chatroom
+import com.pavellukyanov.domain.chatrooms.entity.Message
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.litote.kmongo.coroutine.CoroutineDatabase
@@ -20,7 +19,7 @@ class ChatRoomsDataSourceImpl(
     }
 
     override suspend fun getAllChatrooms(): List<Chatroom> = withContext(Dispatchers.IO) {
-        chatrooms.collection.find().toList().sortedByDescending { it.lastMessageTimeStamp }
+        chatrooms.find().descendingSort(Chatroom::lastMessageTimeStamp).toList()
     }
 
     override suspend fun updateChatroom(chatroom: Chatroom): Boolean = withContext(Dispatchers.IO) {

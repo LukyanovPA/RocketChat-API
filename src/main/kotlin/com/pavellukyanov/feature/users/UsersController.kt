@@ -1,8 +1,8 @@
 package com.pavellukyanov.feature.users
 
-import com.pavellukyanov.data.users.response.UserResponse
-import com.pavellukyanov.feature.auth.UserDataSource
-import com.pavellukyanov.feature.chatrooms.ChatRoomsDataSource
+import com.pavellukyanov.domain.users.entity.response.UserResponse
+import com.pavellukyanov.data.users.UserDataSource
+import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
