@@ -46,10 +46,12 @@ class ChatRoomInteractor(
                 message = message
             )
 
-            chatRoomsDataSource.insertMessages(messageEntity)
+            val isInsert = chatRoomsDataSource.insertMessages(messageEntity)
 
-            val parsedMessage = Json.encodeToString(messageEntity)
-            member.socket.send(Frame.Text(parsedMessage))
+            if (isInsert) {
+                val parsedMessage = Json.encodeToString(messageEntity)
+                member.socket.send(Frame.Text(parsedMessage))
+            }
         }
     }
 

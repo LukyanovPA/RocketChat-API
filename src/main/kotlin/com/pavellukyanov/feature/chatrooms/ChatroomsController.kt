@@ -228,10 +228,7 @@ fun Route.sendMessageWebSocket(
         }
 
         try {
-            chatRoomInteractor.onJoin(
-                user = user,
-                socket = this
-            )
+            chatRoomInteractor.onJoin(user = user, socket = this)
 
             incoming.consumeEach { frame ->
                 if (frame is Frame.Text) {
@@ -245,7 +242,7 @@ fun Route.sendMessageWebSocket(
         } catch (e: MemberAlreadyExistsException) {
             call.respond(HttpStatusCode.Conflict)
         } catch (e: Exception) {
-            e.printStackTrace()
+            call.respond(HttpStatusCode.Conflict, e.localizedMessage)
         } finally {
             chatRoomInteractor.tryDisconnect(user)
         }
