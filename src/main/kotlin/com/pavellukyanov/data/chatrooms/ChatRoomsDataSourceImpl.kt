@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.coroutine.toList
+import org.litote.kmongo.eq
 
 class ChatRoomsDataSourceImpl(
     db: CoroutineDatabase
@@ -48,8 +49,8 @@ class ChatRoomsDataSourceImpl(
         chatrooms.find().toList().find { it.id.toString() == chatroomId }
     }
 
-    override suspend fun deleteChatroom(chatroomId: String): Boolean = withContext(Dispatchers.IO) {
-        chatrooms.deleteOne(Filters.eq("id", chatroomId))
-        return@withContext messages.deleteMany(Filters.eq("chatroomId", chatroomId)).wasAcknowledged()
+    override suspend fun deleteChatroom(chatroom: Chatroom): Boolean = withContext(Dispatchers.IO) {
+        chatrooms.deleteOne(Chatroom::id eq chatroom.id)
+        return@withContext messages.deleteMany(Message::chatroomId eq chatroom.id.toString()).wasAcknowledged()
     }
 }

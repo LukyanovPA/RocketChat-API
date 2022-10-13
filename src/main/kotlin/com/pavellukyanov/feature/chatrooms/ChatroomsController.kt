@@ -180,8 +180,8 @@ fun Route.deleteChatRoom(chatRoomsDataSource: ChatRoomsDataSource) {
                 val isOwner = chatroom?.ownerId == userId.toString()
 
                 if (isOwner) {
-                    chatRoomsDataSource.deleteChatroom(chatRoomId).also { state ->
-                        chatroom?.imagePath?.let { path ->
+                    chatRoomsDataSource.deleteChatroom(chatroom!!).also { state ->
+                        chatroom.imagePath?.let { path ->
                             File("/var/www/html/uploads/chats/$path").delete()
                         }
                         call.respond(HttpStatusCode.OK, state)
