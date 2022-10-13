@@ -45,7 +45,7 @@ class ChatRoomsDataSourceImpl(
     }
 
     override suspend fun getChatroom(chatroomId: String): Chatroom? = withContext(Dispatchers.IO) {
-        chatrooms.findOne(Filters.eq("id", chatroomId))
+        chatrooms.find().toList().find { it.id.toString() == chatroomId }
     }
 
     override suspend fun deleteChatroom(chatroomId: String): Boolean = withContext(Dispatchers.IO) {

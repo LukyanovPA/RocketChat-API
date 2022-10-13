@@ -33,7 +33,7 @@ fun Route.createChatRoom(
                 return@post
             }
 
-            val userId = principal.getClaim("userId", String::class)
+            val userId = principal.getClaim("userId", ObjectId::class)
             val multipartData = call.receiveMultipart()
 
             var chatRoomName: String? = null
@@ -184,7 +184,7 @@ fun Route.deleteChatRoom(chatRoomsDataSource: ChatRoomsDataSource) {
                         chatroom?.imagePath?.let { path ->
                             File("/var/www/html/uploads/chats/$path").delete()
                         }
-                        if (state) call.respond(HttpStatusCode.OK, true) else call.respond(HttpStatusCode.Conflict)
+                        call.respond(HttpStatusCode.OK, state)
                     }
                 } else {
                     call.respond(HttpStatusCode.Conflict, "This user is not the chat owner")

@@ -2,6 +2,8 @@ package com.pavellukyanov.data.chatrooms
 
 import com.pavellukyanov.domain.chatrooms.entity.Chatroom
 import com.pavellukyanov.domain.chatrooms.entity.Message
+import org.bson.types.ObjectId
+import org.litote.kmongo.Id
 
 interface ChatRoomsDataSource {
     suspend fun insertChatroom(chatroom: Chatroom): Boolean
