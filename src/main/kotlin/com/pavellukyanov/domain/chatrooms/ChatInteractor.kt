@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-class ChatRoomInteractor(
+class ChatInteractor(
     private val chatRoomsDataSource: ChatRoomsDataSource
 ) {
     private val members = ConcurrentHashMap<String, Member>()
@@ -26,29 +26,29 @@ class ChatRoomInteractor(
     }
 
     suspend fun sendMessage(chatRoomId: String, message: String, user: User) {
-        members.values.forEach { member ->
-            val timeStamp = Calendar.getInstance().time.time
-            val newChatroom = chatRoomsDataSource.getAllChatrooms()
-                .find { it.id.toString() == chatRoomId }
-                ?.copy(
-                    lastMessageTimeStamp = timeStamp,
-                    lastMessage = message
-                )
-
-            newChatroom?.let { chatRoomsDataSource.updateChatroom(it) }
-
-            val messageEntity = Message(
-                chatroomId = chatRoomId,
-                messageTimeStamp = timeStamp,
-                ownerId = user.id.toString(),
-                ownerUsername = user.username,
-                ownerAvatar = user.avatar,
-                message = message
+        val timeStamp = Calendar.getInstance().time.time
+        val newChatroom = chatRoomsDataSource.getAllChatrooms()
+            .find { it.id.toString() == chatRoomId }
+            ?.copy(
+                lastMessageTimeStamp = timeStamp,
+                lastMessage = message
             )
 
-            val isInsert = chatRoomsDataSource.insertMessages(messageEntity)
+        newChatroom?.let { chatRoomsDataSource.updateChatroom(it) }
 
-            if (isInsert) {
+        val messageEntity = Message(
+            chatroomId = chatRoomId,
+            messageTimeStamp = timeStamp,
+            ownerId = user.id.toString(),
+            ownerUsername = user.username,
+            ownerAvatar = user.avatar,
+            message = message
+        )
+
+        val isInsert = chatRoomsDataSource.insertMessages(messageEntity)
+
+        if (isInsert) {
+            members.values.forEach { member ->
                 val parsedMessage = Json.encodeToString(messageEntity)
                 member.socket.send(Frame.Text(parsedMessage))
             }

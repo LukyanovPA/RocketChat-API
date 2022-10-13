@@ -11,6 +11,7 @@ data class Chatroom(
     val name: String,
     val description: String,
     val chatroomImg: String?,
+    val imagePath: String?,
     val lastMessageTimeStamp: Long,
     val lastMessage: String
 )

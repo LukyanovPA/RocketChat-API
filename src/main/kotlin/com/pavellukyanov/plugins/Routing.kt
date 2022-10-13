@@ -2,7 +2,8 @@ package com.pavellukyanov.plugins
 
 import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
 import com.pavellukyanov.data.users.UserDataSource
-import com.pavellukyanov.domain.chatrooms.ChatRoomInteractor
+import com.pavellukyanov.domain.chatrooms.ChatInteractor
+import com.pavellukyanov.domain.chatrooms.CreateChatRoomInteractor
 import com.pavellukyanov.feature.auth.*
 import com.pavellukyanov.feature.chatrooms.*
 import com.pavellukyanov.feature.users.changeAvatar
@@ -19,12 +20,13 @@ fun Application.configureRouting(
     val userDataSource by inject<UserDataSource>()
     val chatRoomsDataSource by inject<ChatRoomsDataSource>()
     val tokenService by inject<TokenService>()
-    val chatRoomInteractor by inject<ChatRoomInteractor>()
+    val chatInteractor by inject<ChatInteractor>()
+    val createChatInteractor by inject<CreateChatRoomInteractor>()
 
     routing {
 //        trace { application.log.trace(it.buildText()) }
-        //Auth
         route("/") {
+            //Auth
             signUp(tokenService, tokenConfig, userDataSource)
             signIn(tokenService, tokenConfig, userDataSource)
             refreshToken(tokenService, tokenConfig, userDataSource)
@@ -36,12 +38,11 @@ fun Application.configureRouting(
             getCurrentUser(userDataSource)
 
             //Chatrooms
-            uploadChatRoomImg()
-            createChatroom(chatRoomsDataSource, userDataSource)
             getAllChatrooms(chatRoomsDataSource)
             getMessages(chatRoomsDataSource)
-            sendMessage(chatRoomsDataSource, userDataSource)
-            sendMessageWebSocket(chatRoomInteractor, userDataSource)
+            sendMessage(chatInteractor, userDataSource)
+            deleteChatRoom(chatRoomsDataSource)
+            createChatRoom(createChatInteractor)
         }
     }
 }

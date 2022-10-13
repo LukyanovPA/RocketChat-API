@@ -10,4 +10,6 @@ interface ChatRoomsDataSource {
     suspend fun insertMessages(messages: Message): Boolean
     suspend fun getMessages(chatroomId: String): List<Message>
     suspend fun updateUserAvatar(ownerId: String, avatar: String): Boolean
+    suspend fun getChatroom(chatroomId: String): Chatroom?
+    suspend fun deleteChatroom(chatroomId: String): Boolean
 }

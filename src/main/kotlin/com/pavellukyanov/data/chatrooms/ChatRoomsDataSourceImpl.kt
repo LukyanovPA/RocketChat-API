@@ -43,4 +43,13 @@ class ChatRoomsDataSourceImpl(
         }
         return@withContext true
     }
+
+    override suspend fun getChatroom(chatroomId: String): Chatroom? = withContext(Dispatchers.IO) {
+        chatrooms.findOne(Filters.eq("id", chatroomId))
+    }
+
+    override suspend fun deleteChatroom(chatroomId: String): Boolean = withContext(Dispatchers.IO) {
+        chatrooms.deleteOne(Filters.eq("id", chatroomId))
+        return@withContext messages.deleteMany(Filters.eq("chatroomId", chatroomId)).wasAcknowledged()
+    }
 }

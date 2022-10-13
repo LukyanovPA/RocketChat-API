@@ -13,8 +13,8 @@ fun Application.configureSession() {
 
     intercept(Plugins) {
         if(call.sessions.get<ChatSession>() == null) {
-            val username = call.parameters["userId"] ?: "defaultId"
-            call.sessions.set(ChatSession(username, generateNonce()))
+//            val username = call.parameters["userId"] ?: "defaultId"
+            call.sessions.set(ChatSession(/*username,*/ generateNonce()))
         }
     }
 }

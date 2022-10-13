@@ -1,10 +1,11 @@
 package com.pavellukyanov.di
 
-import com.pavellukyanov.data.chatrooms.ChatRoomsDataSourceImpl
-import com.pavellukyanov.data.users.UserDataSourceImpl
-import com.pavellukyanov.data.users.UserDataSource
 import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
-import com.pavellukyanov.domain.chatrooms.ChatRoomInteractor
+import com.pavellukyanov.data.chatrooms.ChatRoomsDataSourceImpl
+import com.pavellukyanov.data.users.UserDataSource
+import com.pavellukyanov.data.users.UserDataSourceImpl
+import com.pavellukyanov.domain.chatrooms.ChatInteractor
+import com.pavellukyanov.domain.chatrooms.CreateChatRoomInteractor
 import com.pavellukyanov.security.token.JwtTokenService
 import com.pavellukyanov.security.token.TokenService
 import org.koin.dsl.module
@@ -36,6 +37,10 @@ val mainModule = module {
     }
 
     single {
-        ChatRoomInteractor(get())
+        ChatInteractor(get())
+    }
+
+    single {
+        CreateChatRoomInteractor(get(), get())
     }
 }
