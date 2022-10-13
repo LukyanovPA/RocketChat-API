@@ -164,12 +164,12 @@ fun Route.sendMessage(
 
 fun Route.deleteChatRoom(chatRoomsDataSource: ChatRoomsDataSource) {
     authenticate {
-        post("api/chatrooms/delete/{chatrommId?}") {
+        post("api/chatrooms/delete/{chatroomId?}") {
             val principal = call.principal<JWTPrincipal>() ?: kotlin.run {
                 call.respond(HttpStatusCode.BadRequest)
                 return@post
             }
-            val chatRoomId = call.parameters["chatrommId"] ?: kotlin.run {
+            val chatRoomId = call.parameters["chatroomId"] ?: kotlin.run {
                 call.respond(HttpStatusCode.BadRequest)
                 return@post
             }
