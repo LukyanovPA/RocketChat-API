@@ -42,7 +42,7 @@ fun Application.configureRouting(
             getMessages(chatRoomsDataSource)
             sendMessage(chatInteractor, userDataSource)
             deleteChatRoom(chatRoomsDataSource)
-            createChatRoom(createChatInteractor)
+            createChatRoom(createChatInteractor, userDataSource)
         }
     }
 }

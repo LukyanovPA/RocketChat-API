@@ -31,7 +31,8 @@ class ChatInteractor(
             .find { it.id.toString() == chatRoomId }
             ?.copy(
                 lastMessageTimeStamp = timeStamp,
-                lastMessage = message
+                lastMessage = message,
+                lastMessageOwnerUsername = user.username
             )
 
         newChatroom?.let { chatRoomsDataSource.updateChatroom(it) }

@@ -24,7 +24,8 @@ import java.io.File
 import java.util.*
 
 fun Route.createChatRoom(
-    createChatRoomInteractor: CreateChatRoomInteractor
+    createChatRoomInteractor: CreateChatRoomInteractor,
+    userDataSource: UserDataSource
 ) {
     authenticate {
         post("api/chatrooms/create") {
@@ -35,6 +36,7 @@ fun Route.createChatRoom(
 
             val userId = principal.getClaim("userId", ObjectId::class)
             val multipartData = call.receiveMultipart()
+            val user = userDataSource.getCurrentUser(userId!!)
 
             var chatRoomName: String? = null
             var chatRoomDescription: String? = null
@@ -70,7 +72,8 @@ fun Route.createChatRoom(
                         chatroomImg = img ?: "https://alenka.capital/data/preview/583/58348.jpg",
                         imagePath = imgPath,
                         lastMessageTimeStamp = Calendar.getInstance().time.time,
-                        lastMessage = "Hi everyone, im create a $chatRoomName!"
+                        lastMessage = "Hi everyone, im create a $chatRoomName!",
+                        lastMessageOwnerUsername = user?.username
                     )
 
                     call.respond(
