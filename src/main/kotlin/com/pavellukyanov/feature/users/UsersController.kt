@@ -1,8 +1,9 @@
 package com.pavellukyanov.feature.users
 
-import com.pavellukyanov.domain.users.entity.response.UserResponse
-import com.pavellukyanov.data.users.UserDataSource
 import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
+import com.pavellukyanov.data.users.UserDataSource
+import com.pavellukyanov.domain.users.entity.response.UserResponse
+import com.pavellukyanov.utils.map
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -78,6 +79,19 @@ fun Route.getCurrentUser(userDataSource: UserDataSource) {
                     avatar = user?.avatar
                 )
             )
+        }
+    }
+}
+
+fun Route.getAllUsers(userDataSource: UserDataSource) {
+    authenticate {
+        get("api/users/getAllUsers") {
+            try {
+                val users = userDataSource.getAllUsers().map { user -> user.map() }
+                call.respond(status = HttpStatusCode.OK, message = users)
+            } catch (e: Exception) {
+                call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
+            }
         }
     }
 }

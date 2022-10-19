@@ -52,4 +52,8 @@ class UserDataSourceImpl(
     override suspend fun deleteToken(userId: String?): Boolean = withContext(Dispatchers.IO) {
         tokens.deleteOne(Filters.eq("userId", userId)).wasAcknowledged()
     }
+
+    override suspend fun getAllUsers(): List<User> = withContext(Dispatchers.IO) {
+        users.find().descendingSort(User::username).toList()
+    }
 }

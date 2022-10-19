@@ -14,4 +14,5 @@ interface UserDataSource {
     suspend fun getRefreshToken(userId: String): String?
     suspend fun updateToken(token: Token): Boolean
     suspend fun deleteToken(userId: String?): Boolean
+    suspend fun getAllUsers(): List<User>
 }
