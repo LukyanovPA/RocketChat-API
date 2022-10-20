@@ -20,6 +20,10 @@ class UserDataSourceImpl(
         users.findOne(User::email eq email)
     }
 
+    override suspend fun getUserByUsername(username: String): User? = withContext(Dispatchers.IO) {
+        users.findOne(User::username eq username)
+    }
+
     override suspend fun insertUser(user: User): Boolean = withContext(Dispatchers.IO) {
         users.insertOne(user).wasAcknowledged()
     }

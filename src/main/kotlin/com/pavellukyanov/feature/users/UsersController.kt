@@ -1,11 +1,10 @@
 package com.pavellukyanov.feature.users
 
-import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
-import com.pavellukyanov.data.users.UserDataSource
+import com.pavellukyanov.domain.BaseResponse
+import com.pavellukyanov.domain.auth.entity.State
+import com.pavellukyanov.domain.users.UsersInteractor
 import com.pavellukyanov.domain.users.entity.response.UserResponse
-import com.pavellukyanov.utils.map
 import io.ktor.http.*
-import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -13,84 +12,112 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.bson.types.ObjectId
-import java.io.File
 
 fun Route.changeAvatar(
-    chatRoomsDataSource: ChatRoomsDataSource,
-    userDataSource: UserDataSource
+    usersInteractor: UsersInteractor
 ) {
     authenticate {
         post("api/users/changeAvatar") {
-            try {
-                val principal = call.principal<JWTPrincipal>() ?: kotlin.run {
-                    call.respond(HttpStatusCode.BadRequest)
+            val principal = call.principal<JWTPrincipal>() ?: kotlin.run {
+                call.respond(HttpStatusCode.BadRequest)
+                return@post
+            }
+            val userId = principal.getClaim("userId", ObjectId::class)
+            val multipartData = call.receiveMultipart()
+
+            when (val state = usersInteractor.changeAvatar(userId, multipartData)) {
+                is State.Success -> {
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = BaseResponse<@JvmWildcard UserResponse>(
+                            success = true,
+                            data = state.data
+                        )
+                    )
                     return@post
                 }
-                var fileName = ""
-                var file = File(fileName)
-                val userId = principal.getClaim("userId", ObjectId::class)
-                val user = userDataSource.getCurrentUser(userId!!)
-
-                val multipartData = call.receiveMultipart()
-
-                multipartData.forEachPart { part ->
-                    when (part) {
-                        is PartData.FileItem -> {
-                            fileName = part.originalFileName as String
-                            var fileBytes = part.streamProvider().readBytes()
-                            file = File("/var/www/html/uploads/avatars/$userId-$fileName")
-                            file.writeBytes(fileBytes)
-                        }
-                        else -> {}
-                    }
+                is State.Error -> {
+                    call.respond(
+                        status = HttpStatusCode.ServiceUnavailable,
+                        message = BaseResponse<@JvmWildcard UserResponse>(
+                            success = false,
+                            errorMessage = state.error
+                        )
+                    )
+                    return@post
                 }
-
-                val avatar = "http://188.225.9.194/uploads/avatars/${file.name}"
-
-                val changedUser = user?.copy(
-                    avatar = avatar
-                )!!
-
-                val isAvatarChanged = userDataSource.changeUserAvatar(changedUser)
-
-                if (isAvatarChanged) chatRoomsDataSource.updateUserAvatar(user.id.toString(), avatar)
-
-                call.respond(status = HttpStatusCode.OK, message = isAvatarChanged)
-            } catch (e: Exception) {
-                call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
+                is State.Exception -> call.respond(
+                    status = HttpStatusCode.Conflict,
+                    message = state.exception.localizedMessage
+                )
             }
         }
     }
 }
 
-fun Route.getCurrentUser(userDataSource: UserDataSource) {
+fun Route.getCurrentUser(usersInteractor: UsersInteractor) {
     authenticate {
         get("api/users/currentUser") {
             val principal = call.principal<JWTPrincipal>()
             val userId = principal?.getClaim("userId", ObjectId::class)
-            val user = userDataSource.getCurrentUser(userId!!)
 
-            call.respond(
-                status = HttpStatusCode.OK,
-                message = UserResponse(
-                    uuid = user?.id.toString(),
-                    username = user?.username,
-                    email = user?.email,
-                    avatar = user?.avatar
+            when (val state = usersInteractor.getCurrentUser(userId)) {
+                is State.Success -> {
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = BaseResponse<@JvmWildcard UserResponse>(
+                            success = true,
+                            data = state.data
+                        )
+                    )
+                    return@get
+                }
+                is State.Error -> {
+                    call.respond(
+                        status = HttpStatusCode.ServiceUnavailable,
+                        message = BaseResponse<@JvmWildcard UserResponse>(
+                            success = false,
+                            errorMessage = state.error
+                        )
+                    )
+                    return@get
+                }
+                is State.Exception -> call.respond(
+                    status = HttpStatusCode.Conflict,
+                    message = state.exception.localizedMessage
                 )
-            )
+            }
         }
     }
 }
 
-fun Route.getAllUsers(userDataSource: UserDataSource) {
+fun Route.getAllUsers(usersInteractor: UsersInteractor) {
     authenticate {
         get("api/users/getAllUsers") {
-            try {
-                val users = userDataSource.getAllUsers().map { user -> user.map() }
-                call.respond(status = HttpStatusCode.OK, message = users)
-            } catch (e: Exception) {
-                call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
+            when (val state = usersInteractor.getAllUsers()) {
+                is State.Success -> {
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = BaseResponse<@JvmWildcard List<UserResponse>>(
+                            success = true,
+                            data = state.data
+                        )
+                    )
+                }
+                is State.Error -> {
+                    call.respond(
+                        status = HttpStatusCode.ServiceUnavailable,
+                        message = BaseResponse<@JvmWildcard List<UserResponse>>(
+                            success = false,
+                            errorMessage = state.error
+                        )
+                    )
+                    return@get
+                }
+                is State.Exception -> call.respond(
+                    status = HttpStatusCode.Conflict,
+                    message = state.exception.localizedMessage
+                )
             }
         }
     }

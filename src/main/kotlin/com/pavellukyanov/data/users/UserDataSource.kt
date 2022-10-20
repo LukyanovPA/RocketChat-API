@@ -6,6 +6,7 @@ import org.bson.types.ObjectId
 
 interface UserDataSource {
     suspend fun getUserByEmail(email: String): User?
+    suspend fun getUserByUsername(username: String): User?
     suspend fun insertUser(user: User): Boolean
     suspend fun getCurrentUser(id: ObjectId): User?
     suspend fun changeUserAvatar(user: User): Boolean

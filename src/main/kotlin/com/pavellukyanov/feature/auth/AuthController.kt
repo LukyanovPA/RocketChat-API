@@ -1,14 +1,11 @@
 package com.pavellukyanov.feature.auth
 
-import com.pavellukyanov.data.users.UserDataSource
+import com.pavellukyanov.domain.BaseResponse
+import com.pavellukyanov.domain.auth.AuthInteractor
+import com.pavellukyanov.domain.auth.entity.State
 import com.pavellukyanov.domain.users.entity.request.SignInRequest
 import com.pavellukyanov.domain.users.entity.request.SignUpRequest
 import com.pavellukyanov.domain.users.entity.response.TokenResponse
-import com.pavellukyanov.domain.auth.entity.Token
-import com.pavellukyanov.domain.auth.entity.User
-import com.pavellukyanov.security.token.TokenClaim
-import com.pavellukyanov.security.token.TokenConfig
-import com.pavellukyanov.security.token.TokenService
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -16,74 +13,40 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.coroutines.launch
-import java.util.*
 
 fun Route.signUp(
-    tokenService: TokenService,
-    tokenConfig: TokenConfig,
-    userDataSource: UserDataSource
+    authInteractor: AuthInteractor
 ) {
     post("api/auth/signup") {
         val request = call.receiveNullable<SignUpRequest>()
 
         if (request != null) {
-            val user = userDataSource.getUserByEmail(request.email)
-            val areFieldsBlank = request.username.isBlank() || request.password.isBlank()
-
-            if (user != null) {
-                call.respond(
-                    status = HttpStatusCode.Conflict,
-                    message = "A user with this email already exists"
-                )
-                return@post
-            }
-
-            if (areFieldsBlank) {
-                call.respond(
-                    status = HttpStatusCode.Conflict,
-                    message = "Empty field username or password"
-                )
-                return@post
-            }
-
-            try {
-                val newUser = User(
-                    username = request.username,
-                    password = request.password,
-                    email = request.email,
-                    avatar = "https://cdn0.iconfinder.com/data/icons/communication-456/24/account_profile_user_contact_person_avatar_placeholder-1024.png"
-                )
-                val token = tokenService.generate(
-                    config = tokenConfig,
-                    TokenClaim(
-                        name = "userId",
-                        value = newUser.id.toString()
-                    )
-                )
-                val refreshToken = UUID.randomUUID().toString()
-                val isUserInsert = userDataSource.insertUser(newUser)
-                if (isUserInsert) {
-                    userDataSource.insertToken(
-                        Token(
-                            userId = newUser.id.toString(),
-                            refreshToken = refreshToken
+            when (val state = authInteractor.signUp(request)) {
+                is State.Success -> {
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = BaseResponse<@JvmWildcard TokenResponse>(
+                            success = true,
+                            data = state.data
                         )
                     )
+                    return@post
                 }
-                call.respond(
-                    status = HttpStatusCode.OK,
-                    message = TokenResponse(
-                        token = token,
-                        refreshToken = refreshToken,
-                        message = null
+                is State.Error -> {
+                    call.respond(
+                        status = HttpStatusCode.ServiceUnavailable,
+                        message = BaseResponse<@JvmWildcard TokenResponse>(
+                            success = false,
+                            errorMessage = state.error
+                        )
                     )
+                    return@post
+                }
+                is State.Exception -> call.respond(
+                    status = HttpStatusCode.Conflict,
+                    message = state.exception.localizedMessage
                 )
-
-            } catch (e: Exception) {
-                call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
             }
-
         } else {
             call.respond(HttpStatusCode.BadRequest)
             return@post
@@ -92,65 +55,38 @@ fun Route.signUp(
 }
 
 fun Route.signIn(
-    tokenService: TokenService,
-    tokenConfig: TokenConfig,
-    userDataSource: UserDataSource
+    authInteractor: AuthInteractor
 ) {
     post("api/auth/signin") {
         val request = call.receiveNullable<SignInRequest>()
 
         if (request != null) {
-            val user = userDataSource.getUserByEmail(request.email)
-
-            if (user == null) {
-                call.respond(
-                    status = HttpStatusCode.Conflict,
-                    message = "Incorrect email or password"
-                )
-                return@post
-            }
-
-            val isValidPassword = request.password == user.password
-
-            if (!isValidPassword) {
-                call.respond(
-                    status = HttpStatusCode.Conflict,
-                    message = "Incorrect email or password"
-                )
-                return@post
-            }
-
-            var refreshToken = userDataSource.getRefreshToken(user.id.toString())
-
-            if (refreshToken == null) {
-                val newRefreshToken = UUID.randomUUID().toString()
-                launch {
-                    userDataSource.insertToken(
-                        Token(
-                            userId = user.id.toString(),
-                            refreshToken = newRefreshToken
+            when (val state = authInteractor.signIn(request)) {
+                is State.Success -> {
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = BaseResponse<@JvmWildcard TokenResponse>(
+                            success = true,
+                            data = state.data
                         )
                     )
+                    return@post
                 }
-                refreshToken = newRefreshToken
+                is State.Error -> {
+                    call.respond(
+                        status = HttpStatusCode.ServiceUnavailable,
+                        message = BaseResponse<@JvmWildcard TokenResponse>(
+                            success = false,
+                            errorMessage = state.error
+                        )
+                    )
+                    return@post
+                }
+                is State.Exception -> call.respond(
+                    status = HttpStatusCode.Conflict,
+                    message = state.exception.localizedMessage
+                )
             }
-
-            val token = tokenService.generate(
-                config = tokenConfig,
-                TokenClaim(
-                    name = "userId",
-                    value = user.id.toString()
-                )
-            )
-
-            call.respond(
-                status = HttpStatusCode.OK,
-                message = TokenResponse(
-                    token = token,
-                    refreshToken = refreshToken,
-                    message = null
-                )
-            )
         } else {
             call.respond(HttpStatusCode.BadRequest)
         }
@@ -158,9 +94,7 @@ fun Route.signIn(
 }
 
 fun Route.refreshToken(
-    tokenService: TokenService,
-    tokenConfig: TokenConfig,
-    userDataSource: UserDataSource
+    authInteractor: AuthInteractor
 ) {
     post("api/auth/updateToken") {
         val request = call.request.queryParameters["refreshToken"]
@@ -169,65 +103,67 @@ fun Route.refreshToken(
             call.respond(HttpStatusCode.BadRequest)
             return@post
         } else {
-            val userId = userDataSource.getUserIdFromTokens(request)
-
-            if (userId == null) {
-                call.respond(
-                    status = HttpStatusCode.BadRequest,
-                    message = TokenResponse(
-                        token = null,
-                        refreshToken = null,
-                        message = "Bad Refresh Token"
-                    )
-                )
-                return@post
-            } else {
-                val newRefreshToken = UUID.randomUUID().toString()
-
-                launch {
-                    userDataSource.updateToken(
-                        Token(
-                            userId = userId,
-                            refreshToken = newRefreshToken
+            when (val state = authInteractor.updateToken(request)) {
+                is State.Success -> {
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = BaseResponse<@JvmWildcard TokenResponse>(
+                            success = true,
+                            data = state.data
                         )
                     )
+                    return@post
                 }
-
-                val token = tokenService.generate(
-                    config = tokenConfig,
-                    TokenClaim(
-                        name = "userId",
-                        value = userId
+                is State.Error -> {
+                    call.respond(
+                        status = HttpStatusCode.ServiceUnavailable,
+                        message = BaseResponse<@JvmWildcard TokenResponse>(
+                            success = false,
+                            errorMessage = state.error
+                        )
                     )
-                )
-
-                call.respond(
-                    status = HttpStatusCode.OK,
-                    message = TokenResponse(
-                        token = token,
-                        refreshToken = newRefreshToken,
-                        message = null
-                    )
+                    return@post
+                }
+                is State.Exception -> call.respond(
+                    status = HttpStatusCode.Conflict,
+                    message = state.exception.localizedMessage
                 )
             }
         }
     }
 }
 
-fun Route.logout(userDataSource: UserDataSource) {
+fun Route.logout(authInteractor: AuthInteractor) {
     authenticate {
         get("api/auth/logout") {
             val principal = call.principal<JWTPrincipal>()
             val userId = principal?.getClaim("userId", String::class)
-            val state = userDataSource.deleteToken(userId)
-
-            if (state) call.respond(HttpStatusCode.OK, true) else call.respond(HttpStatusCode.Conflict)
+            when (val state = authInteractor.logout(userId)) {
+                is State.Success -> {
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = BaseResponse(
+                            success = true,
+                            data = state.data
+                        )
+                    )
+                    return@get
+                }
+                is State.Error -> {
+                    call.respond(
+                        status = HttpStatusCode.ServiceUnavailable,
+                        message = BaseResponse<Boolean>(
+                            success = false,
+                            errorMessage = state.error
+                        )
+                    )
+                    return@get
+                }
+                is State.Exception -> call.respond(
+                    status = HttpStatusCode.Conflict,
+                    message = state.exception.localizedMessage
+                )
+            }
         }
-    }
-}
-
-fun Route.info() {
-    get("api/hello") {
-        call.respond(status = HttpStatusCode.OK, message = "Hello World")
     }
 }

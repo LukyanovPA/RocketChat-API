@@ -4,8 +4,10 @@ import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
 import com.pavellukyanov.data.chatrooms.ChatRoomsDataSourceImpl
 import com.pavellukyanov.data.users.UserDataSource
 import com.pavellukyanov.data.users.UserDataSourceImpl
+import com.pavellukyanov.domain.auth.AuthInteractor
 import com.pavellukyanov.domain.chatrooms.ChatInteractor
 import com.pavellukyanov.domain.chatrooms.CreateChatRoomInteractor
+import com.pavellukyanov.domain.users.UsersInteractor
 import com.pavellukyanov.security.token.JwtTokenService
 import com.pavellukyanov.security.token.TokenService
 import org.koin.dsl.module
@@ -22,6 +24,14 @@ val mainModule = module {
             connectionString = "mongodb+srv://$bdUser:$mongoPw@$bdUser.vkgwyn9.mongodb.net/?retryWrites=true&w=majority"
         ).coroutine
             .getDatabase(dbName)
+    }
+
+    single {
+        UsersInteractor(get(), get())
+    }
+
+    single {
+        AuthInteractor(get(), get(), get())
     }
 
     single<ChatRoomsDataSource> {

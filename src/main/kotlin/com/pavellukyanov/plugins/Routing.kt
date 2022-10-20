@@ -2,42 +2,42 @@ package com.pavellukyanov.plugins
 
 import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
 import com.pavellukyanov.data.users.UserDataSource
+import com.pavellukyanov.domain.auth.AuthInteractor
 import com.pavellukyanov.domain.chatrooms.ChatInteractor
 import com.pavellukyanov.domain.chatrooms.CreateChatRoomInteractor
-import com.pavellukyanov.feature.auth.*
+import com.pavellukyanov.domain.users.UsersInteractor
+import com.pavellukyanov.feature.auth.logout
+import com.pavellukyanov.feature.auth.refreshToken
+import com.pavellukyanov.feature.auth.signIn
+import com.pavellukyanov.feature.auth.signUp
 import com.pavellukyanov.feature.chatrooms.*
 import com.pavellukyanov.feature.users.changeAvatar
 import com.pavellukyanov.feature.users.getAllUsers
 import com.pavellukyanov.feature.users.getCurrentUser
-import com.pavellukyanov.security.token.TokenConfig
-import com.pavellukyanov.security.token.TokenService
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
-fun Application.configureRouting(
-    tokenConfig: TokenConfig,
-) {
+fun Application.configureRouting() {
     val userDataSource by inject<UserDataSource>()
     val chatRoomsDataSource by inject<ChatRoomsDataSource>()
-    val tokenService by inject<TokenService>()
     val chatInteractor by inject<ChatInteractor>()
     val createChatInteractor by inject<CreateChatRoomInteractor>()
+    val authInteractor by inject<AuthInteractor>()
+    val usersInteractor by inject<UsersInteractor>()
 
     routing {
-//        trace { application.log.trace(it.buildText()) }
         route("/") {
             //Auth
-            signUp(tokenService, tokenConfig, userDataSource)
-            signIn(tokenService, tokenConfig, userDataSource)
-            refreshToken(tokenService, tokenConfig, userDataSource)
-            logout(userDataSource)
-            info()
+            signUp(authInteractor)
+            signIn(authInteractor)
+            refreshToken(authInteractor)
+            logout(authInteractor)
 
             //Users
-            changeAvatar(chatRoomsDataSource, userDataSource)
-            getCurrentUser(userDataSource)
-            getAllUsers(userDataSource)
+            changeAvatar(usersInteractor)
+            getCurrentUser(usersInteractor)
+            getAllUsers(usersInteractor)
 
             //Chatrooms
             getAllChatrooms(chatRoomsDataSource)
