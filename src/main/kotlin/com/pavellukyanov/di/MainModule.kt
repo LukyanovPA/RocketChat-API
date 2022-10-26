@@ -6,7 +6,7 @@ import com.pavellukyanov.data.users.UserDataSource
 import com.pavellukyanov.data.users.UserDataSourceImpl
 import com.pavellukyanov.domain.auth.AuthInteractor
 import com.pavellukyanov.domain.chatrooms.ChatInteractor
-import com.pavellukyanov.domain.chatrooms.CreateChatRoomInteractor
+import com.pavellukyanov.domain.chatrooms.ChatRoomInteractor
 import com.pavellukyanov.domain.users.UsersInteractor
 import com.pavellukyanov.security.token.JwtTokenService
 import com.pavellukyanov.security.token.TokenService
@@ -47,10 +47,10 @@ val mainModule = module {
     }
 
     single {
-        ChatInteractor(get())
+        ChatRoomInteractor(get(), get())
     }
 
     single {
-        CreateChatRoomInteractor(get(), get())
+        ChatInteractor(get())
     }
 }

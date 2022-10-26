@@ -9,4 +9,7 @@ object Errors {
     const val INCORRECT_PASSWORD = "Incorrect password"
     const val BAD_REFRESH_TOKEN = "Bad Refresh Token"
     const val BAD_USER_ID = "Bad userId"
+
+    //ChatRoom
+    const val CHAT_NAME_NOT_SPECIFIED = "Chat name not specified"
 }

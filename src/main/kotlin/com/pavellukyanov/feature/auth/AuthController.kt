@@ -116,7 +116,7 @@ fun Route.refreshToken(
                 }
                 is State.Error -> {
                     call.respond(
-                        status = HttpStatusCode.ServiceUnavailable,
+                        status = HttpStatusCode.Conflict,
                         message = BaseResponse<@JvmWildcard TokenResponse>(
                             success = false,
                             errorMessage = state.error

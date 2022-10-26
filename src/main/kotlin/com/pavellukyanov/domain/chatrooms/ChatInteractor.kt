@@ -1,11 +1,15 @@
 package com.pavellukyanov.domain.chatrooms
 
 import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
+import com.pavellukyanov.domain.SocketMessage
+import com.pavellukyanov.domain.auth.entity.State
 import com.pavellukyanov.domain.auth.entity.User
 import com.pavellukyanov.domain.chatrooms.entity.Member
 import com.pavellukyanov.domain.chatrooms.entity.Message
 import com.pavellukyanov.utils.MemberAlreadyExistsException
 import io.ktor.websocket.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.*
@@ -25,25 +29,25 @@ class ChatInteractor(
         )
     }
 
-    suspend fun sendMessage(chatRoomId: String, message: String, user: User) {
+    suspend fun sendMessage(socketMessage: SocketMessage, user: User) {
         val timeStamp = Calendar.getInstance().time.time
-        val newChatroom = chatRoomsDataSource.getAllChatrooms()
-            .find { it.id.toString() == chatRoomId }
-            ?.copy(
-                lastMessageTimeStamp = timeStamp,
-                lastMessage = message,
-                lastMessageOwnerUsername = user.username
-            )
+        val newChatroom = chatRoomsDataSource.getChatroom(socketMessage.chatRoomId)?.copy(
+            lastMessageTimeStamp = timeStamp,
+            lastMessage = socketMessage.chatMessage,
+            lastMessageOwnerUsername = user.username
+        )
 
-        newChatroom?.let { chatRoomsDataSource.updateChatroom(it) }
+        newChatroom?.let {
+            chatRoomsDataSource.updateChatroom(it)
+        }
 
         val messageEntity = Message(
-            chatroomId = chatRoomId,
+            chatroomId = socketMessage.chatRoomId,
             messageTimeStamp = timeStamp,
             ownerId = user.id.toString(),
             ownerUsername = user.username,
             ownerAvatar = user.avatar,
-            message = message
+            message = socketMessage.chatMessage
         )
 
         val isInsert = chatRoomsDataSource.insertMessages(messageEntity)
@@ -60,6 +64,15 @@ class ChatInteractor(
         members[user.id.toString()]?.socket?.close()
         if (members.containsKey(user.id.toString())) {
             members.remove(user.id.toString())
+        }
+    }
+
+    suspend fun getAllMessages(chatroomId: String): State<List<Message>> = withContext(Dispatchers.IO) {
+        try {
+            val messages = chatRoomsDataSource.getMessages(chatroomId)
+            State.Success(messages)
+        } catch (e: Exception) {
+            State.Exception(e)
         }
     }
 }
