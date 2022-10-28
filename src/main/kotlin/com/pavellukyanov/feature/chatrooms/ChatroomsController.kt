@@ -1,12 +1,12 @@
 package com.pavellukyanov.feature.chatrooms
 
-import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
 import com.pavellukyanov.data.users.UserDataSource
 import com.pavellukyanov.domain.BaseResponse
 import com.pavellukyanov.domain.SocketMessage
 import com.pavellukyanov.domain.auth.entity.State
 import com.pavellukyanov.domain.chatrooms.ChatInteractor
 import com.pavellukyanov.domain.chatrooms.ChatRoomInteractor
+import com.pavellukyanov.domain.chatrooms.entity.Chatroom
 import com.pavellukyanov.domain.chatrooms.entity.Message
 import com.pavellukyanov.utils.MemberAlreadyExistsException
 import io.ktor.http.*
@@ -22,7 +22,6 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.bson.types.ObjectId
-import java.io.File
 
 fun Route.createChatRoom(
     chatRoomInteractor: ChatRoomInteractor
@@ -65,14 +64,33 @@ fun Route.createChatRoom(
     }
 }
 
-fun Route.getAllChatrooms(chatRoomsDataSource: ChatRoomsDataSource) {
+fun Route.getAllChatrooms(chatRoomInteractor: ChatRoomInteractor) {
     authenticate {
         get("api/chatrooms/getAllChatrooms") {
-            try {
-                val chats = chatRoomsDataSource.getAllChatrooms()
-                call.respond(status = HttpStatusCode.OK, message = chats)
-            } catch (e: Exception) {
-                call.respond(status = HttpStatusCode.Conflict, message = e.localizedMessage)
+            when (val state = chatRoomInteractor.getAllChatRooms()) {
+                is State.Success -> {
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = BaseResponse<@JvmWildcard List<Chatroom>>(
+                            success = true,
+                            data = state.data
+                        )
+                    )
+                }
+                is State.Error -> {
+                    call.respond(
+                        status = HttpStatusCode.ServiceUnavailable,
+                        message = BaseResponse<@JvmWildcard List<Chatroom>>(
+                            success = false,
+                            errorMessage = state.error
+                        )
+                    )
+                    return@get
+                }
+                is State.Exception -> call.respond(
+                    status = HttpStatusCode.Conflict,
+                    message = state.exception.localizedMessage
+                )
             }
         }
     }
@@ -152,7 +170,7 @@ fun Route.sendMessage(
     }
 }
 
-fun Route.deleteChatRoom(chatRoomsDataSource: ChatRoomsDataSource) {
+fun Route.deleteChatRoom(chatRoomInteractor: ChatRoomInteractor) {
     authenticate {
         post("api/chatrooms/delete/{chatroomId?}") {
             val principal = call.principal<JWTPrincipal>() ?: kotlin.run {
@@ -165,22 +183,30 @@ fun Route.deleteChatRoom(chatRoomsDataSource: ChatRoomsDataSource) {
             }
             val userId = principal.getClaim("userId", ObjectId::class)
 
-            try {
-                val chatroom = chatRoomsDataSource.getChatroom(chatRoomId)
-                val isOwner = chatroom?.ownerId == userId.toString()
-
-                if (isOwner) {
-                    chatRoomsDataSource.deleteChatroom(chatroom!!).also { state ->
-                        chatroom.imagePath?.let { path ->
-                            File("/var/www/html/uploads/chats/$path").delete()
-                        }
-                        call.respond(HttpStatusCode.OK, state)
-                    }
-                } else {
-                    call.respond(HttpStatusCode.Conflict, "This user is not the chat owner")
+            when (val state = chatRoomInteractor.delete(userId!!, chatRoomId)) {
+                is State.Success -> {
+                    call.respond(
+                        status = HttpStatusCode.OK,
+                        message = BaseResponse<Boolean>(
+                            success = true,
+                            data = state.data
+                        )
+                    )
                 }
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.Conflict, e.localizedMessage)
+                is State.Error -> {
+                    call.respond(
+                        status = HttpStatusCode.ServiceUnavailable,
+                        message = BaseResponse<Boolean>(
+                            success = false,
+                            errorMessage = state.error
+                        )
+                    )
+                    return@post
+                }
+                is State.Exception -> call.respond(
+                    status = HttpStatusCode.Conflict,
+                    message = state.exception.localizedMessage
+                )
             }
         }
     }

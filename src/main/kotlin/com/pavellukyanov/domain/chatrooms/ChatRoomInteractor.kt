@@ -72,4 +72,33 @@ class ChatRoomInteractor(
             State.Exception(e)
         }
     }
+
+    suspend fun getAllChatRooms(): State<List<Chatroom>> = withContext(Dispatchers.IO) {
+        try {
+            State.Success(chatRoomsDataSource.getAllChatrooms())
+        } catch (e: Exception) {
+            State.Exception(e)
+        }
+    }
+
+    suspend fun delete(userId: ObjectId, chatRoomId: String): State<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val chatroom = chatRoomsDataSource.getChatroom(chatRoomId)
+            val isOwner = chatroom?.ownerId == userId.toString()
+
+            if (isOwner) {
+                val state = chatRoomsDataSource.deleteChatroom(chatroom!!)
+                if (state) {
+                    chatroom.imagePath?.let { path ->
+                        File("/var/www/html/uploads/chats/$path").delete()
+                    }
+                }
+                State.Success(state)
+            } else {
+                State.Error(Errors.USER_IS_NOT_CHAT_OWNER)
+            }
+        } catch (e: Exception) {
+            State.Exception(e)
+        }
+    }
 }

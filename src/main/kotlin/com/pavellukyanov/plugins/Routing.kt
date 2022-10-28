@@ -1,6 +1,5 @@
 package com.pavellukyanov.plugins
 
-import com.pavellukyanov.data.chatrooms.ChatRoomsDataSource
 import com.pavellukyanov.data.users.UserDataSource
 import com.pavellukyanov.domain.auth.AuthInteractor
 import com.pavellukyanov.domain.chatrooms.ChatInteractor
@@ -20,7 +19,6 @@ import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
     val userDataSource by inject<UserDataSource>()
-    val chatRoomsDataSource by inject<ChatRoomsDataSource>()
     val chatInteractor by inject<ChatInteractor>()
     val createChatInteractor by inject<ChatRoomInteractor>()
     val authInteractor by inject<AuthInteractor>()
@@ -40,10 +38,10 @@ fun Application.configureRouting() {
             getAllUsers(usersInteractor)
 
             //Chatrooms
-            getAllChatrooms(chatRoomsDataSource)
+            getAllChatrooms(createChatInteractor)
             getMessages(chatInteractor)
             sendMessage(chatInteractor, userDataSource)
-            deleteChatRoom(chatRoomsDataSource)
+            deleteChatRoom(createChatInteractor)
             createChatRoom(createChatInteractor)
         }
     }

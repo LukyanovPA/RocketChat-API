@@ -12,4 +12,5 @@ object Errors {
 
     //ChatRoom
     const val CHAT_NAME_NOT_SPECIFIED = "Chat name not specified"
+    const val USER_IS_NOT_CHAT_OWNER = "This user is not the chat owner"
 }
